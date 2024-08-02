@@ -61,7 +61,7 @@ edx: %08X
 -------------
 
 Press CTRL+C and send info to forum.)#"), ex->ExceptionRecord->ExceptionCode, ex->ExceptionRecord->ExceptionAddress,
-mod == (HMODULE)cheat_module ? CXOR("AIRFLOW") : module_name, bytes,
+mod == (HMODULE)cheat_module ? CXOR("ECLIPSE") : module_name, bytes,
 ex->ContextRecord->Eax, ex->ContextRecord->Ebx, ex->ContextRecord->Ecx, ex->ContextRecord->Edx);
 
 	// display messagebox.

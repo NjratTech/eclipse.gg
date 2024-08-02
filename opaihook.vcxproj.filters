@@ -237,9 +237,6 @@
     <ClCompile Include="resolver.cpp">
       <Filter>helpers</Filter>
     </ClCompile>
-    <ClCompile Include="features.cpp">
-      <Filter>features</Filter>
-    </ClCompile>
     <ClCompile Include="bytesarray.cpp">
       <Filter>other</Filter>
     </ClCompile>

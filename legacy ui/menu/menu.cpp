@@ -205,7 +205,7 @@ void c_menu::draw_ui_background()
 
 	auto clr = g_cfg.misc.ui_color.base();
 	
-	auto letter = XOR("airflow");
+	auto letter = XOR("eclipse");
 
 	ImGui::PushFont(RENDER->fonts.dmg.get());
 	auto text_size = ImGui::CalcTextSize(letter.c_str());

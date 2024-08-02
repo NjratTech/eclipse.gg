@@ -8,7 +8,7 @@ extern unsigned char SFUIDisplay_Bold[181484];
 extern unsigned int qo0icons_compressed_data[38584 / 4];
 extern unsigned char cheatLogo[1742];
 
-extern unsigned char airflow_tab_icon[5538];
+extern unsigned char eclipse_tab_icon[5538];
 extern unsigned char rage_icon[366];
 extern unsigned char antihit_icon[434];
 extern unsigned char visuals_icon[372];

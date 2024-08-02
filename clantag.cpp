@@ -1,6 +1,7 @@
 #include "globals.hpp"
 #include "clantag.hpp"
 
+// TODO: peredelat clantag
 const char8_t* icons[]
 {
 	u8"\u2621",

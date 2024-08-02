@@ -36,7 +36,7 @@
     <ProjectGuid>{5f68854c-01eb-435b-913e-139078cf39a0}</ProjectGuid>
     <RootNamespace>SDK</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>opaihook</ProjectName>
+    <ProjectName>eclipse</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -374,7 +374,6 @@
     <ClCompile Include="event_logs.cpp" />
     <ClCompile Include="exploits.cpp" />
     <ClCompile Include="fake_lag.cpp" />
-    <ClCompile Include="features.cpp" />
     <ClCompile Include="fov_and_view.cpp" />
     <ClCompile Include="game_movement.cpp" />
     <ClCompile Include="globals.cpp" />

@@ -23,7 +23,7 @@ public:
 	INLINE void push_message(const std::string& message, const c_color& color = { 255, 255, 255, 255 }, bool debug = false)
 	{
 		auto clr = g_cfg.misc.ui_color.base();
-		HACKS->cvar->print_console_color(clr, CXOR("[AIRFLOW] "));
+		HACKS->cvar->print_console_color(clr, CXOR("[eclipse.gg] "));
 
 		if (!debug)
 		{

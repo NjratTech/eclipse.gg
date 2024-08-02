@@ -8,7 +8,7 @@ private:
 	int last_change_time{};
 	float next_update_time{};
 
-	std::string tag_desc = XOR(" airflow ");
+	std::string tag_desc = XOR(" eclipse ");
 
 	INLINE void set_clan_tag(const char* tag, const char* name)
 	{

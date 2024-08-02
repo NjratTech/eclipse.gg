@@ -142,8 +142,8 @@ namespace config
 
 	void create_config_folder()
 	{
-		folder = CXOR("airflow\\");
-		sounds_folder = CXOR("airflow\\sounds");
+		folder = CXOR("eclipse\\");
+		sounds_folder = CXOR("eclipse\\sounds");
 
 		if (!is_dir(folder.c_str()))
 			CreateDirectoryA(folder.c_str(), NULL);
