@@ -161,17 +161,10 @@ namespace config
 			save_bool(rage, CXOR("enable"), default_config.rage.enable);
 			save_bool(rage, CXOR("resolver"), default_config.rage.resolver);
 			save_bool(rage, CXOR("auto_fire"), default_config.rage.auto_fire);
-			save_bool(rage, CXOR("air_defensive"), default_config.rage.air_defensive);
+			save_uint(rage, CXOR("defensive_options"), default_config.rage.defensive_options);
 			save_int(rage, CXOR("spike_amt"), default_config.rage.spike_amt);
 			save_int(rage, CXOR("roll_amt"), default_config.rage.roll_amt);
 			save_int(rage, CXOR("roll_amt_pitch"), default_config.rage.roll_amt_pitch);
-
-#if ALPHA || _DEBUG || BETA
-			save_bool(rage, CXOR("round_lagcomp"), default_config.rage.round_lagcomp);
-			save_bool(rage, CXOR("delay_on_breaklc"), default_config.rage.delay_on_breaklc);
-			save_bool(rage, CXOR("jitterfix"), default_config.rage.jitterfix);
-			save_int(rage, CXOR("jitterfix_method"), default_config.rage.jitterfix_method);
-#endif
 
 			for (int i = 0; i < weapon_max; i++)
 			{
@@ -192,7 +185,6 @@ namespace config
 
 				save_uint(rage[sub], CXOR("quick_stop_options"), default_config.rage.weapon[i].quick_stop_options);
 				save_uint(rage[sub], CXOR("hitboxes"), default_config.rage.weapon[i].hitboxes);
-			//	save_uint(rage[sub], CXOR("hitchance_skips"), default_config.rage.weapon[i].hitchance_skips);
 			}
 		}
 
@@ -488,17 +480,10 @@ namespace config
 			save_bool(rage, CXOR("enable"), g_cfg.rage.enable);
 			save_bool(rage, CXOR("resolver"), g_cfg.rage.resolver);
 			save_bool(rage, CXOR("auto_fire"), g_cfg.rage.auto_fire);
-			save_bool(rage, CXOR("air_defensive"), g_cfg.rage.air_defensive);
+			save_uint(rage, CXOR("defensive_options"), g_cfg.rage.defensive_options);
 			save_int(rage, CXOR("spike_amt"), g_cfg.rage.spike_amt);
 			save_int(rage, CXOR("roll_amt"), g_cfg.rage.roll_amt);
 			save_int(rage, CXOR("roll_amt_pitch"), g_cfg.rage.roll_amt_pitch);
-
-#if ALPHA || _DEBUG || BETA
-			save_bool(rage, CXOR("round_lagcomp"), g_cfg.rage.round_lagcomp);
-			save_bool(rage, CXOR("delay_on_breaklc"), g_cfg.rage.delay_on_breaklc);
-			save_bool(rage, CXOR("jitterfix"), g_cfg.rage.jitterfix);
-			save_int(rage, CXOR("jitterfix_method"), g_cfg.rage.jitterfix_method);
-#endif
 
 			for (int i = 0; i < weapon_max; i++)
 			{
@@ -826,7 +811,7 @@ namespace config
 			load_bool(rage, CXOR("enable"), g_cfg.rage.enable);
 			load_bool(rage, CXOR("resolver"), g_cfg.rage.resolver);
 			load_bool(rage, CXOR("auto_fire"), g_cfg.rage.auto_fire);
-			load_bool(rage, CXOR("air_defensive"), g_cfg.rage.air_defensive);
+			load_uint(rage, CXOR("defensive_options"), g_cfg.rage.defensive_options);
 			load_int(rage, CXOR("spike_amt"), g_cfg.rage.spike_amt);
 			load_int(rage, CXOR("roll_amt"), g_cfg.rage.roll_amt);
 			load_int(rage, CXOR("roll_amt_pitch"), g_cfg.rage.roll_amt_pitch);

@@ -159,7 +159,7 @@ void c_bullet_tracers::on_player_hurt(c_game_event* event)
 			}
 		}
 		else
-			play_sound_from_memory((uint8_t*)gamesense_sound, sizeof(gamesense_sound), volume);
+			HACKS->engine->execute_client_cmd("play buttons/arena_switch_press_02");
 	}
 
 	if (!g_cfg.misc.hitmarker && !g_cfg.misc.damage)

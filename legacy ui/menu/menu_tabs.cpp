@@ -664,10 +664,6 @@ void c_menu::draw_ui_items()
 		{
 		case 0:
 		{
-			// please turn off legit before configuring rage!
-			//if (g_cfg.legit.enable)
-			//	render_warning_message(XOR("legit"), XOR("rage"));
-		//	else
 			{
 				ImGui::Columns(2, 0, false);
 				ImGui::SetColumnOffset(1, 270);
@@ -696,11 +692,9 @@ void c_menu::draw_ui_items()
 					{
 						key_bind(CXOR("Double tap"), g_cfg.binds[dt_b]);
 
-#ifndef LEGACY
 						key_bind(CXOR("Hide shots"), g_cfg.binds[hs_b]);
-#endif
 
-						checkbox(CXOR("Defensive in air"), &g_cfg.rage.air_defensive);
+						multi_combo(CXOR("Defensive options##double_tap"), g_cfg.rage.defensive_options, { XOR("Always on"), XOR("Defensive teleport") });
 					}
 					end_child;
 
@@ -709,10 +703,7 @@ void c_menu::draw_ui_items()
 						key_bind(CXOR("Override damage"), g_cfg.binds[override_dmg_b]);
 						key_bind(CXOR("Force body"), g_cfg.binds[force_body_b]);
 
-#ifndef LEGACY
 						key_bind(CXOR("Force safe point"), g_cfg.binds[force_sp_b]);
-#endif
-
 					}
 					end_child;
 
@@ -737,15 +728,13 @@ void c_menu::draw_ui_items()
 						auto dmg_str = weapon_settings.mindamage == 100 ? CXOR("HP") : weapon_settings.mindamage > 100 ? CXOR("HP + ") + std::to_string(weapon_settings.mindamage - 100) : CXOR("%dHP");
 						auto override_str = weapon_settings.damage_override == 100 ? CXOR("HP") : weapon_settings.damage_override > 100 ? CXOR("HP + ") + std::to_string(weapon_settings.damage_override - 100) : CXOR("%dHP");
 
-				//		multi_combo(CXOR("Skip hitchance"), weapon_settings.hitchance_skips, { XOR("Low spread"), XOR("DT / Still") });
-
 						slider_int(CXOR("Hitchance"), &weapon_settings.hitchance, 0, 100, CXOR("%d%%"));
 
 						slider_int(CXOR("Min damage"), &weapon_settings.mindamage, 1, 120, dmg_str.c_str());
 						slider_int(CXOR("Min damage (override)"), &weapon_settings.damage_override, 1, 120, override_str.c_str());
 
 						checkbox(CXOR("Quick stop"), &weapon_settings.quick_stop);
-						multi_combo(CXOR("Options##quick_stop"), weapon_settings.quick_stop_options, { CXOR("Early"), CXOR("Between shots"), CXOR("Force accuracy"), CXOR("In air")/*, CXOR("Force duck")*/ });
+						multi_combo(CXOR("Options##quick_stop"), weapon_settings.quick_stop_options, { CXOR("Early"), CXOR("Between shots"), CXOR("Force accuracy"), CXOR("In air") });
 					}
 					end_child;
 
@@ -762,85 +751,15 @@ void c_menu::draw_ui_items()
 						slider_int(CXOR("Body scale"), &weapon_settings.scale_body, -1, 100, scale_body_str.c_str());
 						checkbox( CXOR("Prefer body"), &weapon_settings.prefer_body );
 						checkbox( CXOR("Prefer safe point"), &weapon_settings.prefer_safe );
-
-				/*		checkbox(CXOR("Prefer safe point"), &weapon_settings.prefer_safe);
-						checkbox(CXOR("Prefer body"), &weapon_settings.prefer_body);*/
 					}
 					end_child;
-
-					//begin_child(CXOR("Roll resolver"))
-					//{
-					//	key_bind(CXOR("Roll override"), g_cfg.binds[force_roll_b]);
-					//	slider_int(CXOR("Angle"), &g_cfg.rage.roll_amt, -90, 90, CXOR("%d degree"));
-					//	slider_int(CXOR("Pitch angle"), &g_cfg.rage.roll_amt_pitch, 0, 20, CXOR("%d degree"));
-					//}
-					//end_child;
 				}
 			}
 		}
 		break;
 		case 1:
 		{
-			// please turn off rage before configuring legit!
-		//	if (g_cfg.rage.enable)
 				render_warning_message(XOR("rage"), XOR("legit"));
-			/*else
-			{
-				ImGui::Columns(2, 0, false);
-				ImGui::SetColumnOffset(1, 270);
-				{
-					begin_child(CXOR("Choose your weapon    "))
-					{
-						combo(CXOR("Setting up...##legit"), &g_cfg.legit.group_type, legit_weapon_configs, IM_ARRAYSIZE(legit_weapon_configs));
-					}
-					end_child;
-
-					begin_child(CXOR("General     "))
-					{
-						checkbox(CXOR("Enable##legit_cfg"), &g_cfg.legit.enable);
-
-						key_bind(CXOR("Aim##legit_cfg"), g_cfg.binds[toggle_legit_b]);
-						checkbox(CXOR("Autowall##legit_cfg"), &g_cfg.legit.autowall);
-
-						auto dmg_str = g_cfg.legit.min_damage == 100 ? CXOR("HP") : g_cfg.legit.min_damage > 100 ? CXOR("HP + ") + std::to_string(g_cfg.legit.min_damage - 100) : CXOR("%dHP");
-
-						slider_int(CXOR("Min damage"), &g_cfg.legit.min_damage, 1, 120, dmg_str.c_str());
-
-						checkbox(CXOR("Disable on flash"), &g_cfg.legit.flash_check);
-						checkbox(CXOR("Disable on smoke"), &g_cfg.legit.smoke_check);
-					}
-					end_child;
-
-					begin_child(CXOR("RCS settings "))
-					{
-						auto& rcs_cfg = g_cfg.legit.rcs;
-						checkbox(CXOR("Enable##legit_aimbot_rcs"), &rcs_cfg.enable);
-
-						slider_int(CXOR("Amount##legit_aimbot_rcs"), &rcs_cfg.amount, 1, 100, CXOR("%d%%"));
-					}
-					end_child;
-				}
-				ImGui::NextColumn();
-				{
-					begin_child(CXOR("Weapon settings "))
-					{
-						auto& legit_cfg = g_cfg.legit.legit_weapon[g_cfg.legit.group_type];
-						checkbox(CXOR("Enable##legit_aimbot"), &legit_cfg.enable);
-						checkbox(CXOR("Draw FOV##legit_aimbot"), &legit_cfg.fov_cicle);
-						color_picker(CXOR("FOV color##legit_aimbot"), legit_cfg.circle_color);
-						checkbox(CXOR("Backtrack##legit_aimbot"), &legit_cfg.backtrack);
-						checkbox(CXOR("Quick stop##legit_aimbot"), &legit_cfg.quick_stop);
-
-						multi_combo(CXOR("Hitboxes"), legit_cfg.hitboxes, { XOR("Head"), XOR("Chest"), XOR("Stomach"), XOR("Pelvis") });
-
-						slider_int(CXOR("FOV"), &legit_cfg.fov, 1, 100);
-						slider_int(CXOR("Smooth"), &legit_cfg.smooth, 1, 100);
-
-						slider_int(CXOR("Shot delay"), &legit_cfg.aim_delay, 0, 1000, CXOR("%d% ms"));
-					}
-					end_child;
-				}
-			}*/
 		}
 		break;
 		case 2:
@@ -851,9 +770,7 @@ void c_menu::draw_ui_items()
 				begin_child(CXOR("Main"))
 				{
 					checkbox(CXOR("Enable##antiaim"), &g_cfg.antihit.enable);
-#ifndef LEGACY
-					//checkbox(CXOR("Silent on-shot##antiaim"), &g_cfg.antihit.silent_onshot);
-#endif
+
 					checkbox(CXOR("At targets##antiaim"), &g_cfg.antihit.at_targets);
 
 					combo(CXOR("Pitch"), &g_cfg.antihit.pitch, aa_pitch, IM_ARRAYSIZE(aa_pitch));
@@ -873,7 +790,6 @@ void c_menu::draw_ui_items()
 				}
 				end_child;
 
-#ifndef LEGACY
 				begin_child(CXOR("Defensive Anti-Aims"))
 				{
 					checkbox(CXOR("Change pitch##antiaim"), &g_cfg.antihit.def_pitch);
@@ -882,7 +798,6 @@ void c_menu::draw_ui_items()
 					combo(CXOR("Defensive type##antiaim"), &g_cfg.antihit.def_aa_mode, defensive_aa_mode, IM_ARRAYSIZE(defensive_aa_mode));
 				}
 				end_child;
-#endif
 			}
 			ImGui::NextColumn();
 			{
@@ -903,25 +818,18 @@ void c_menu::draw_ui_items()
 				}
 				end_child;
 
-#ifndef LEGACY
 				begin_child(CXOR("Enhancement"))
 				{
-				//	checkbox(CXOR("Jitter move"), &g_cfg.antihit.jitter_move);
 					checkbox(CXOR("Randomize yaw jitter"), &g_cfg.antihit.random_jitter);
 					checkbox(CXOR("Randomize fake jitter"), &g_cfg.antihit.random_dsy);
 					checkbox(CXOR("Randomize fake amount"), &g_cfg.antihit.random_amount);
 				}
 				end_child;
-#endif
 
 				begin_child(CXOR("Movement"))
 				{
-#ifdef LEGACY
-					key_bind(CXOR("Fake walk"), g_cfg.binds[sw_b]);
-#else
 					key_bind(CXOR("Fake duck"), g_cfg.binds[fd_b]);
 					key_bind(CXOR("Slow walk"), g_cfg.binds[sw_b]);
-#endif
 				}
 				end_child;
 
@@ -929,18 +837,12 @@ void c_menu::draw_ui_items()
 				{
 					checkbox(CXOR("Enable##fake_angle"), &g_cfg.antihit.desync);
 					key_bind(CXOR("Inverter"), g_cfg.binds[inv_b]);
-#ifndef LEGACY
 					combo(CXOR("Fake type"), &g_cfg.antihit.desync_mode, aa_desync_type, IM_ARRAYSIZE(aa_desync_type));
 					slider_int(CXOR("Left amount##desync"), &g_cfg.antihit.desync_left, 0, 58, CXOR("%d"));
 					slider_int(CXOR("Right amount##desync"), &g_cfg.antihit.desync_right, 0, 58, CXOR("%d"));
-#else
-				//	combo(CXOR("Breaker type"), &g_cfg.antihit.desync_mode, aa_desync_type, IM_ARRAYSIZE(aa_desync_type));
-					slider_int(CXOR("LBY Delta##desync"), &g_cfg.antihit.desync_left, 0, 180, CXOR("%d"));
-#endif
 				}
 				end_child;
 
-#ifndef LEGACY
 				begin_child(CXOR("Extended fake"))
 				{
 					checkbox(CXOR("Enable##distortion"), &g_cfg.antihit.distortion);
@@ -950,7 +852,6 @@ void c_menu::draw_ui_items()
 					slider_int(CXOR("Height##body_lean"), &g_cfg.antihit.distortion_pitch, 0, 50);
 				}
 				end_child;
-#endif
 			}
 		}
 		break;
@@ -998,10 +899,6 @@ void c_menu::draw_ui_items()
 							  XOR("Flags"),
 							  XOR("OOF Arrow"),
 							  XOR("Glow"),
-#if _DEBUG || ALPHA || BETA
-							  XOR("Resolver mode"),
-#endif
-							//  XOR("Skeleton"),
 							});
 
 						if (enemy_esp.elements & 1)
@@ -1021,9 +918,6 @@ void c_menu::draw_ui_items()
 
 						if (enemy_esp.elements & 256)
 							color_picker(CXOR("Glow color##esp_enemy"), enemy_esp.colors.glow);
-
-						/*if (enemy_esp.elements & 512)
-							color_picker(CXOR("Skeleton color##esp_enemy"), enemy_esp.colors.skeleton);*/
 					}
 					end_child;
 				}
@@ -1480,10 +1374,6 @@ void c_menu::draw_ui_items()
 					{
 						checkbox(CXOR("Unlock hidden cvars"), &g_cfg.misc.unlock_hidden_cvars);
 						checkbox(CXOR("Bypass sv_pure"), &g_cfg.misc.bypass_sv_pure);
-
-#if ALPHA || _DEBUG
-						checkbox(CXOR("Force crash"), &g_cfg.misc.force_crash);
-#endif
 					}
 					end_child;
 				}
@@ -1517,7 +1407,6 @@ void c_menu::draw_ui_items()
 				}
 				end_child;
 
-#ifndef LEGACY
 				begin_child(CXOR("Player"))
 				{
 					combo(CXOR("Mask"), &g_cfg.skins.masks, masks, IM_ARRAYSIZE(masks));
@@ -1533,7 +1422,6 @@ void c_menu::draw_ui_items()
 						input_text(CXOR("Model path##agent_t"), g_cfg.skins.custom_model_t, 128);
 				}
 				end_child;
-#endif
 			}
 			ImGui::NextColumn();
 			{

@@ -233,22 +233,15 @@ struct configs_t
 		bool enable{};
 
 		bool auto_fire{};
-		bool air_defensive{};
 		bool resolver{};
-
-#if ALPHA || _DEBUG || BETA
-		bool jitterfix{};
-		int jitterfix_method{};
-
-		bool round_lagcomp{};
-		bool delay_on_breaklc{};
-#endif
 
 		int spike_amt{};
 		int roll_amt = 50;
 		int roll_amt_pitch = 0;
 
 		int group_type{};
+
+		unsigned int defensive_options{};
 
 		std::array< rage_weapon_t, 6 > weapon{};
 	} rage;

@@ -21,7 +21,6 @@ bool can_fake_duck()
 
 void c_anti_aim::fake_duck()
 {
-#ifndef LEGACY
 	auto state = HACKS->local->animstate();
 	if (!state)
 		return;
@@ -73,7 +72,6 @@ void c_anti_aim::fake_duck()
 
 		start = true;
 	}
-#endif
 }
 
 INLINE int get_ticks_to_stop()
@@ -664,7 +662,6 @@ void c_anti_aim::run()
 {
 	auto update_tickbase_state = [&]()
 	{
-#ifndef LEGACY
 		static int old_tickbase = 0;
 
 		if (!EXPLOITS->enabled() || (EXPLOITS->get_exploit_mode() != EXPLOITS_DT) || EXPLOITS->cl_move.trigger && EXPLOITS->cl_move.shifting || cmd_shift::shifting)
@@ -690,7 +687,6 @@ void c_anti_aim::run()
 		}
 
 		old_tickbase = HACKS->local->tickbase();
-#endif
 	};
 
 	update_tickbase_state();

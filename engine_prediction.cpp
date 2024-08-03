@@ -70,6 +70,7 @@ void c_engine_prediction::start()
 	HACKS->local->button_released() = buttons_changed & (~buttons);
 
 	HACKS->prediction->check_moving_ground(HACKS->local, HACKS->global_vars->frametime);
+	HACKS->prediction->set_local_view_angles(HACKS->cmd->viewangles);
 
 	HACKS->local->run_pre_think();
 	HACKS->local->run_think();

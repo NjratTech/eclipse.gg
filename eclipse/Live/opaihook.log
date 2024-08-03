@@ -1,8 +1,8 @@
-﻿  animations.cpp
+﻿  bullet_tracers.cpp
 LINK : warning LNK4098: библиотека по умолчанию "LIBCMT" конфликтует с использованием других библиотек; используйте /NODEFAULTLIB:library
   Создание кода
-  49 of 12952 functions ( 0.4%) were compiled, the rest were copied from previous compilation.
+  6 of 13019 functions (<0.1%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    202 functions had inline decision re-evaluated but remain unchanged
+    181 functions had inline decision re-evaluated but remain unchanged
   Создание кода завершено
   opaihook.vcxproj -> C:\Users\gravel1337\Desktop\eclipse.gg\Bins\csgo-release.dll

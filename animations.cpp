@@ -747,7 +747,6 @@ vec3_t c_animation_fix::get_eye_position(float angle)
 }
 
 	HACKS->local->set_abs_origin(old_abs_origin);
-	//HACKS->debug_overlay->add_text_overlay(eye_pos, HACKS->global_vars->interval_per_tick * 2.f, "POS");
 	return eye_pos;
 }
 
@@ -859,7 +858,6 @@ void c_animation_fix::update_local()
 	{
 		// Update view angles to ensure consistency
 		HACKS->local->render_angles() = HACKS->local->eye_angles() = eye_angles;
-		HACKS->prediction->set_local_view_angles(eye_angles);
 	}
 }
 
