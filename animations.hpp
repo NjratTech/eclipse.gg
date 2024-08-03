@@ -413,8 +413,6 @@ public:
 	}
 
 	void update_enemies();
-	void handle_jump_animations(c_animation_state* state, c_animation_layers* layers, c_user_cmd* cmd);
-	void handle_strafing(c_animation_state* state, c_user_cmd* cmd);
 	void update_local();
 	vec3_t get_eye_position(float angle);
 	void render_matrices(c_cs_player* player);

@@ -739,11 +739,9 @@ vec3_t c_animation_fix::get_eye_position(float angle)
 		local_anim->bone_builder.store(HACKS->local, HACKS->local->bone_cache().base(), 0x7FF00, hdr, bone_flags_base, bone_parent_count);
 		local_anim->bone_builder.setup();
 
-#ifndef LEGACY
 		clamp_bones_info_t info{};
 		info.store(HACKS->local);
 		local_anim->bone_builder.clamp_bones_in_bbox(HACKS->local, HACKS->local->bone_cache().base(), 0x7FF00, HACKS->tickbase, HACKS->local->eye_angles(), info);
-#endif
 
 		modify_eye_pos(eye_pos, HACKS->local->bone_cache().base());
 }
@@ -751,87 +749,6 @@ vec3_t c_animation_fix::get_eye_position(float angle)
 	HACKS->local->set_abs_origin(old_abs_origin);
 	//HACKS->debug_overlay->add_text_overlay(eye_pos, HACKS->global_vars->interval_per_tick * 2.f, "POS");
 	return eye_pos;
-}
-
-// due to valve are retards & play animation events only on server
-// for correct animation sync we should play animation events by yourself
-void c_animation_fix::handle_jump_animations(c_animation_state* state, c_animation_layers* layers, c_user_cmd* cmd) {
-	auto& local = local_anims;
-
-	auto land_or_climb = &layers[ANIMATION_LAYER_MOVEMENT_LAND_OR_CLIMB];
-	auto jump_or_fall = &layers[ANIMATION_LAYER_MOVEMENT_JUMP_OR_FALL];
-
-	auto networked = ENGINE_PREDICTION->get_networked_vars(cmd->command_number);
-
-	auto ground_entity_handle = networked->ground_entity;
-	auto ground_entity = (c_base_entity*)(HACKS->entity_list->get_client_entity_handle(ground_entity_handle));
-
-	auto old_on_ladder = local.old_move_type == MOVETYPE_LADDER;
-	auto on_ladder = networked->move_type == MOVETYPE_LADDER;
-
-	auto& flags = networked->flags;
-
-	auto landed = flags.has(FL_ONGROUND) && !local.old_flags.has(FL_ONGROUND);
-	auto jumped = !flags.has(FL_ONGROUND) && local.old_flags.has(FL_ONGROUND);
-
-	auto entered_ladder = on_ladder && !old_on_ladder;
-	auto left_ladder = !on_ladder && old_on_ladder;
-
-	local.old_flags = flags;
-	local.old_move_type = networked->move_type;
-
-	if (entered_ladder)
-		state->set_layer_sequence(land_or_climb, ACT_CSGO_CLIMB_LADDER);
-
-//	HACKS->debug_overlay->add_text_overlay(HACKS->local->origin(), 0.5f, "%d", ground_entity_handle);
-
-	if (cmd->buttons.has(IN_JUMP) && !ground_entity)
-		state->set_layer_sequence(jump_or_fall, ACT_CSGO_JUMP);
-
-	if (flags.has(FL_ONGROUND)) {
-		if (!local.landing && landed) {
-			int activity = state->duration_in_air > 1.f ? ACT_CSGO_LAND_HEAVY : ACT_CSGO_LAND_LIGHT;
-			state->set_layer_sequence(land_or_climb, activity);
-
-			local.landing = true;
-		}
-	}
-	else {
-		if (!cmd->buttons.has(IN_JUMP) && (jumped || left_ladder))
-			state->set_layer_sequence(jump_or_fall, ACT_CSGO_FALL);
-
-		local.landing = false;
-	}
-}
-
-// i should handle even strafe values...
-void c_animation_fix::handle_strafing(c_animation_state* state, c_user_cmd* cmd) {
-	auto buttons = cmd->buttons;
-
-	vec3_t forward{};
-	vec3_t right{};
-	vec3_t up{};
-
-	math::angle_vectors(vec3_t(0, state->abs_yaw, 0), &forward, &right, &up);
-	right = right.normalized();
-
-	auto velocity = state->velocity_normalized_non_zero;
-	auto speed = state->speed_as_portion_of_walk_top_speed;
-
-	float vel_to_right_dot = velocity.dot(right);
-	float vel_to_foward_dot = velocity.dot(forward);
-
-	bool move_right = (buttons.has(IN_MOVERIGHT)) != 0;
-	bool move_left = (buttons.has(IN_MOVELEFT)) != 0;
-	bool move_forward = (buttons.has(IN_FORWARD)) != 0;
-	bool move_backward = (buttons.has(IN_BACK)) != 0;
-
-	bool strafe_right = (speed >= 0.73f && move_right && !move_left && vel_to_right_dot < -0.63f);
-	bool strafe_left = (speed >= 0.73f && move_left && !move_right && vel_to_right_dot > 0.63f);
-	bool strafe_forward = (speed >= 0.65f && move_forward && !move_backward && vel_to_foward_dot < -0.55f);
-	bool strafe_backward = (speed >= 0.65f && move_backward && !move_forward && vel_to_foward_dot > 0.55f);
-
-	HACKS->local->strafing() = (strafe_right || strafe_left || strafe_forward || strafe_backward);
 }
 
 void c_animation_fix::update_local()
@@ -876,9 +793,6 @@ void c_animation_fix::update_local()
 	HACKS->global_vars->curtime = TICKS_TO_TIME(HACKS->tickbase);
 	HACKS->global_vars->frametime = HACKS->global_vars->interval_per_tick;
 
-	//draw_server_hitbox(HACKS->local);
-
-	// force update viewmodel
 	auto viewmodel = (c_base_entity*)(HACKS->entity_list->get_client_entity_handle(HACKS->local->viewmodel()));
 	if (viewmodel)
 		offsets::update_all_viewmodel_addons.cast<int(__fastcall*)(void*)>()(viewmodel);
@@ -893,26 +807,23 @@ void c_animation_fix::update_local()
 
 	HACKS->local->render_angles() = HACKS->local->eye_angles() = eye_angles;
 
-	auto real_layers = HACKS->local->animlayers();
-	real_layers[ANIMATION_LAYER_MOVEMENT_JUMP_OR_FALL] = local_anims.layers[ANIMATION_LAYER_MOVEMENT_JUMP_OR_FALL];
-	real_layers[ANIMATION_LAYER_MOVEMENT_LAND_OR_CLIMB] = local_anims.layers[ANIMATION_LAYER_MOVEMENT_LAND_OR_CLIMB];
-
-	//printf("%f \n", HACKS->cmd->viewangles.x);
-
 	local_anims.old_vars.store(HACKS->cmd);
 	{
 		auto unpred_vars = ENGINE_PREDICTION->get_initial_vars();
 		unpred_vars->restore(true);
 
-		handle_jump_animations(state, real_layers, HACKS->cmd);
-		handle_strafing(state, HACKS->cmd);
-		HACKS->local->force_update_animations(anim);
+		// Ensure the animation state is consistent
+		if (state->last_update_time == HACKS->global_vars->curtime)
+			state->last_update_time = HACKS->global_vars->curtime + HACKS->global_vars->interval_per_tick;
 
-		HACKS->prediction->set_local_view_angles(HACKS->local->render_angles());
+		if (state->last_update_frame == HACKS->global_vars->framecount)
+			state->last_update_frame = HACKS->global_vars->framecount - 1;
+
+		// Update local player's animation state
+		state->update(HACKS->local->eye_angles());
+
 	}
 	local_anims.old_vars.restore(true);
-
-	math::memcpy_sse(local_anims.layers, real_layers, sizeof(c_animation_layers) * 13);
 
 	auto hdr = HACKS->local->get_studio_hdr();
 	if (hdr)
@@ -943,6 +854,13 @@ void c_animation_fix::update_local()
 	}
 
 	HACKS->local->set_layers(local_anims.backup_layers);
+
+	if (HACKS->local->is_alive())
+	{
+		// Update view angles to ensure consistency
+		HACKS->local->render_angles() = HACKS->local->eye_angles() = eye_angles;
+		HACKS->prediction->set_local_view_angles(eye_angles);
+	}
 }
 
 void c_animation_fix::render_matrices(c_cs_player* player)
