@@ -883,81 +883,6 @@ void c_animation_fix::update_local()
 	if (viewmodel)
 		offsets::update_all_viewmodel_addons.cast<int(__fastcall*)(void*)>()(viewmodel);
 
-	// in leagcy CS:GO animations proceeds on last cmd
-	// while in new CS they proceeds every tick or every choked cmd
-	// that's why we have diff here :)
-#ifdef LEGACY
-	static float anim_time{};
-
-	if (!HACKS->client_state->choked_commands)
-	{
-		HACKS->local->store_layers(local_anims.backup_layers);
-
-		auto hdr = HACKS->local->get_studio_hdr();
-		if (hdr)
-		{
-			for (int i = 0; i < 13; i++)
-			{
-				auto layer = &HACKS->local->animlayers()[i];
-				layer->owner = HACKS->local;
-				layer->studio_hdr = HACKS->local->get_studio_hdr();
-			}
-
-			HACKS->local->lower_body_yaw() = local_anims.lby_angle;
-
-			RESTORE(HACKS->local->render_angles());
-			HACKS->local->render_angles() = local_anims.sent_eye_pos;
-
-			HACKS->local->force_update_animations(anim);
-
-			HACKS->local->animlayers()[ANIMATION_LAYER_LEAN].weight = 0.f;
-
-			anim_time = HACKS->global_vars->curtime;
-
-			if (!local_anims.on_ground && state->on_ground) {
-				local_anims.lby_angle = local_anims.sent_eye_pos.y;
-				local_anims.last_lby_time = anim_time;
-			}
-			else if (state->velocity_length_xy > 0.1f) {
-				if (state->on_ground)
-					local_anims.lby_angle = local_anims.sent_eye_pos.y;
-
-				local_anims.last_lby_time = anim_time + 0.22f;
-			}
-			else if (anim_time > local_anims.last_lby_time) {
-				local_anims.lby_angle = local_anims.sent_eye_pos.y;
-				local_anims.last_lby_time = anim_time + 1.1f;
-			}
-
-			local_anims.on_ground = state->on_ground;
-
-			//printf("%f -> %f -> %f \n", HACKS->local->lower_body_yaw(), state->abs_yaw, local_anims.sent_eye_pos.y);
-
-			auto bone_flags_base = hdr->bone_flags().base();
-			auto bone_parent_count = hdr->bone_parent_count();
-			const auto& abs_origin = HACKS->local->get_abs_origin();
-
-			local_anims.bone_builder.store(HACKS->local, local_anims.matrix, 0x7FF00, hdr, bone_flags_base, bone_parent_count);
-			local_anims.bone_builder.setup();
-
-			auto speed_portion_walk = state->speed_as_portion_of_walk_top_speed;
-			auto speed_portion_duck = state->speed_as_portion_of_crouch_top_speed;
-			auto transition = state->walk_run_transition;
-			auto duck_amount = state->anim_duck_amount;
-
-			local_anims.foot_yaw = state->abs_yaw;
-			local_anims.aim_matrix_width_range = math::lerp(std::clamp(speed_portion_walk, 0.f, 1.f), 1.f, math::lerp(transition, 0.8f, 0.5f));
-
-			if (duck_amount > 0)
-				local_anims.aim_matrix_width_range = math::lerp(duck_amount * std::clamp(speed_portion_duck, 0.f, 1.f), local_anims.aim_matrix_width_range, 0.5f);
-
-			local_anims.max_desync_range = state->aim_yaw_max * local_anims.aim_matrix_width_range;
-			math::change_bones_position(local_anims.matrix, 128, abs_origin, {});
-		}
-
-		HACKS->local->set_layers(local_anims.backup_layers);
-	}
-#else
 	HACKS->local->store_layers(local_anims.backup_layers);
 
 	vec3_t eye_angles{};
@@ -982,6 +907,8 @@ void c_animation_fix::update_local()
 		handle_jump_animations(state, real_layers, HACKS->cmd);
 		handle_strafing(state, HACKS->cmd);
 		HACKS->local->force_update_animations(anim);
+
+		HACKS->prediction->set_local_view_angles(HACKS->local->render_angles());
 	}
 	local_anims.old_vars.restore(true);
 
@@ -1016,7 +943,6 @@ void c_animation_fix::update_local()
 	}
 
 	HACKS->local->set_layers(local_anims.backup_layers);
-#endif
 }
 
 void c_animation_fix::render_matrices(c_cs_player* player)

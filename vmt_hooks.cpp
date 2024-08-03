@@ -351,6 +351,9 @@ namespace hooks::vmt
 	{
 		static auto original = hooker::get_original(&dispatch_user_message);
 
+		if (msg_type == 63) // CS_UM_SendPlayerItemFound
+			return false;
+
 		if (HACKS->game_rules && !HACKS->game_rules->is_valve_ds())
 		{
 			if (g_cfg.misc.remove_ads && (msg_type == 7 || msg_type == 8 || msg_type == 5))

@@ -260,8 +260,5 @@ namespace offsets
 		setup_whole_body_action = memory::get_pattern(client_dll, CXOR("55 8B EC 83 EC ? 56 57 8B F9 8B 77"));
 		setup_flinch = memory::get_pattern(client_dll, CXOR("55 8B EC 51 56 8B 71 ? 83 BE ? ? ? ? ? 0F 84 ? ? ? ? 8B B6 ? ? ? ? 81 C6 ? ? ? ? 0F 84 ? ? ? ? F3 0F 10 56 ? 0F 28 C2 E8 ? ? ? ? 0F 57 DB 0F 2F D8 73 ? F3 0F 10 49 ? F3 0F 10 66 ? F3 0F 59 CA F3 0F 10 15"));
 		cache_sequences = memory::get_pattern(client_dll, CXOR("55 8B EC 83 E4 ? 83 EC ? 53 56 8B F1 57 8B 46"));
-
-		// GaMeSeNsE
-		run_simulation = pattern::search("client.dll", "E8 ? ? ? ? A1 ? ? ? ? F3 0F 10 45 ? F3 0F 11 40").resolve_rip().get< void* >();
 	}
 }

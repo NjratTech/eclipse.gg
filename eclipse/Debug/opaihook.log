@@ -1,1 +1,105 @@
-﻿  vmt_hooks.cpp
+﻿  animations.cpp
+  anti_aim.cpp
+  bullet_tracers.cpp
+  buy_bot.cpp
+  chams.cpp
+  checksum_crc32.cpp
+  clantag.cpp
+  cmd_shift.cpp
+  convars.cpp
+  detour_hooks.cpp
+  dllmain.cpp
+  engine_prediction.cpp
+  entities.cpp
+  entlistener.cpp
+  esp.cpp
+  esp_object_render.cpp
+  event_logs.cpp
+  eventlistener.cpp
+  exploits.cpp
+  fake_lag.cpp
+  fov_and_view.cpp
+  game_movement.cpp
+  globals.cpp
+  glow.cpp
+  grenade_prediction.cpp
+  hooks.cpp
+  hud_hacks.cpp
+  interfaces.cpp
+  key_states.cpp
+  lagcomp.cpp
+  config_system.cpp
+  config_vars.cpp
+  legacy_str.cpp
+  button.cpp
+  checkbox.cpp
+  colorpicker.cpp
+  combobox.cpp
+  keybind.cpp
+  listbox.cpp
+  slider.cpp
+  textbox.cpp
+  menu.cpp
+  menu_indicators.cpp
+  menu_tabs.cpp
+  snow.cpp
+  main_utils.cpp
+  math.cpp
+  md5_pseudo_random.cpp
+  memory.cpp
+  misc_structs.cpp
+  modules.cpp
+  movement.cpp
+  netvars.cpp
+  offsets.cpp
+  penetration.cpp
+  post_processing.cpp
+  predfix.cpp
+  ragebot.cpp
+  remove_projectiles.cpp
+  render.cpp
+  resolver.cpp
+  sdk_misc.cpp
+  server_bones.cpp
+  skins.cpp
+  spoofers.cpp
+  structs.cpp
+  thirdperson.cpp
+  threaded_animstate.cpp
+  threads.cpp
+  vgui_panel.cpp
+  vmt_hooks.cpp
+  world_modulation.cpp
+  xorpointer.cpp
+  xorstr.cpp
+LINK : warning LNK4098: библиотека по умолчанию "LIBCMTD" конфликтует с использованием других библиотек; используйте /NODEFAULTLIB:library
+LINK : warning LNK4098: библиотека по умолчанию "MSVCRT" конфликтует с использованием других библиотек; используйте /NODEFAULTLIB:library
+freetype_debug.lib(autofit.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(autofit.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(ftbase.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(ftbase.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(ftbitmap.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(ftbitmap.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(ftinit.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(ftinit.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(ftsynth.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(ftsynth.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(ftsystem.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(ftsystem.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(bdf.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(bdf.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(cff.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(cff.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(type1cid.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(type1cid.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(ftgzip.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(ftgzip.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(ftlzw.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(ftlzw.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(pcf.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(pcf.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(pfr.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(pfr.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(psaux.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(psaux.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(pshinter.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(pshinter.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(psmodule.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(psmodule.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(raster.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(raster.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(sfnt.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(sfnt.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(smooth.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(smooth.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(truetype.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(truetype.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(type1.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(type1.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(type42.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(type42.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(winfnt.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(winfnt.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+freetype_debug.lib(ftdebug.obj) : warning LNK4099: "" PDB не найден с "freetype_debug.lib(ftdebug.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+minhook_lib.lib(buffer.obj) : warning LNK4099: "" PDB не найден с "minhook_lib.lib(buffer.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+minhook_lib.lib(hde32.obj) : warning LNK4099: "" PDB не найден с "minhook_lib.lib(hde32.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+minhook_lib.lib(hook.obj) : warning LNK4099: "" PDB не найден с "minhook_lib.lib(hook.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+minhook_lib.lib(trampoline.obj) : warning LNK4099: "" PDB не найден с "minhook_lib.lib(trampoline.obj)" или на ""; компоновка объекта выполняется как при отсутствии отладочных данных
+  opaihook.vcxproj -> C:\Users\gravel1337\Desktop\eclipse.gg\Bins\csgo_debug.dll
