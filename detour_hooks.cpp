@@ -42,14 +42,6 @@ namespace hooks::detour
 		auto& ctx = ecx->cmd_context();
 		if (ctx.user_cmd.tickcount == INT_MAX)
 		{
-			auto old_tick = ctx.user_cmd.command_number - 1;
-			auto vars = PREDFIX->get_compressed_netvars(old_tick);
-
-			if (vars->tickbase == HACKS->local->tickbase())
-				PREDFIX->fix_netvars(old_tick);
-
-			PREDFIX->store(ctx.user_cmd.command_number);
-
 			ctx.needs_processing = false;
 			HACKS->global_vars->tickcount = simulation_tick;
 			return;
@@ -870,13 +862,9 @@ namespace hooks::detour
 		ADD_DETOUR(on_latch_interpolated_variables);
 		ADD_DETOUR(interpolate);
 		ADD_DETOUR(interpolate_player);
-		//ADD_DETOUR(reset_latched);
 
-#ifndef LEGACY
-		//	ADD_DETOUR(trace_filter_to_head_collision);
 		ADD_DETOUR(eye_angles);
 		ADD_DETOUR(on_bbox_change_callback);
 		ADD_DETOUR(clamp_bones_in_bbox);
-#endif
 	}
 }

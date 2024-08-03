@@ -143,6 +143,7 @@ public:
     int tick_rate{};
     int shot_cmd{};
     int arrival_tick{};
+    int last_cmd{};
 
     float outgoing{};
     float real_ping{};

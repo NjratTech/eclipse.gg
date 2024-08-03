@@ -1,82 +1,8 @@
-﻿  animations.cpp
-  anti_aim.cpp
-  bullet_tracers.cpp
-  buy_bot.cpp
-  bytesarray.cpp
-  chams.cpp
-  checksum_crc32.cpp
-  clantag.cpp
-  cmd_shift.cpp
-  convars.cpp
-  detour_hooks.cpp
-  dllmain.cpp
-  engine_prediction.cpp
-  entities.cpp
-  entlistener.cpp
-  esp.cpp
-  esp_object_render.cpp
-  event_logs.cpp
-  eventlistener.cpp
-  exploits.cpp
-  fake_lag.cpp
-  fov_and_view.cpp
-  game_movement.cpp
-  globals.cpp
-  glow.cpp
-  grenade_prediction.cpp
-  hooks.cpp
-  hud_hacks.cpp
-  interfaces.cpp
-  key_states.cpp
-  lagcomp.cpp
-  config_system.cpp
-  config_vars.cpp
-  legacy_str.cpp
-  button.cpp
-  checkbox.cpp
-  colorpicker.cpp
-  combobox.cpp
-  keybind.cpp
-  listbox.cpp
-  slider.cpp
-  textbox.cpp
-  menu.cpp
-  menu_indicators.cpp
-  menu_tabs.cpp
-  snow.cpp
-  main_utils.cpp
-  math.cpp
-  md5_pseudo_random.cpp
-  memory.cpp
-  misc_structs.cpp
-  modules.cpp
-  movement.cpp
-  netvars.cpp
-  offsets.cpp
-  penetration.cpp
-  post_processing.cpp
-  predfix.cpp
-  ragebot.cpp
-  remove_projectiles.cpp
-  render.cpp
-  resolver.cpp
-  sdk_misc.cpp
-  server_bones.cpp
-  skins.cpp
-  spoofers.cpp
-  structs.cpp
-  thirdperson.cpp
-  threaded_animstate.cpp
-  threads.cpp
-  vgui_panel.cpp
-  vmt_hooks.cpp
-  world_modulation.cpp
-  xorpointer.cpp
-  xorstr.cpp
+﻿  detour_hooks.cpp
 LINK : warning LNK4098: библиотека по умолчанию "LIBCMT" конфликтует с использованием других библиотек; используйте /NODEFAULTLIB:library
   Создание кода
-  1490 of 12968 functions (11.5%) were compiled, the rest were copied from previous compilation.
-    42 functions were new in current compilation
-    344 functions had inline decision re-evaluated but remain unchanged
+  41 of 12955 functions ( 0.3%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    176 functions had inline decision re-evaluated but remain unchanged
   Создание кода завершено
   opaihook.vcxproj -> C:\Users\gravel1337\Desktop\eclipse.gg\Bins\csgo-release.dll

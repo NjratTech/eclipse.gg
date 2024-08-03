@@ -385,8 +385,7 @@ public:
 
 	void update();
 	void start();
-	void update_viewmodel_info(c_user_cmd* cmd);
-	void fix_viewmodel(int stage);
+	void fix_viewmodel(bool store);
 	void repredict();
 	void end();
 };

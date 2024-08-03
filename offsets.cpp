@@ -182,72 +182,6 @@ namespace offsets
 		interpolate_player = memory::get_pattern(client_dll, CXOR("55 8B EC 83 EC ? 56 8B F1 83 BE ? ? ? ? ? 0F 85"));
 		reset_latched = memory::get_pattern(client_dll, CXOR("56 8B F1 57 8B BE ? ? ? ? 85 FF 74 ? 8B CF E8 ? ? ? ? 68"));
 
-#ifdef LEGACY
-		view_render = memory::get_pattern(client_dll, CXOR("8B 0D ? ? ? ? 8B 01 FF 50 4C 8B 06")).add(XORN(2));
-		glow_object_manager = memory::get_pattern(client_dll, CXOR("A1 ? ? ? ? A8 01 75 4B"));
-
-		return_addr_loadout_allowed = memory::get_pattern(client_dll, CXOR("84 C0 75 04 B0 01 5F"));
-		using_static_prop_debug = memory::get_pattern(engine_dll, CXOR("8B 0D ? ? ? ? 81 F9 ? ? ? ? 75 ? A1 ? ? ? ? 35 ? ? ? ? EB ? 8B 01 FF 50 ? 83 F8 ? 0F 85 ? ? ? ? 8B 0D"));
-		build_transformations = memory::get_pattern(client_dll, CXOR("55 8B EC 56 8B 75 ? 57 FF 75 ? 8B F9 56"));
-		update_postscreen_effects = memory::get_pattern(client_dll, CXOR("55 8B EC 51 53 56 8B 35 ? ? ? ? 57 8B F9 85 F6 74"));
-		get_sequence_activity = memory::get_pattern(client_dll, CXOR("55 8B EC 83 7D 08 FF 56 8B F1 74 3D"));
-		modify_eye_position = memory::get_pattern(client_dll, CXOR("55 8B EC 83 E4 F8 83 EC 58 56 57 8B F9 83 7F 60"));
-		init_key_values = memory::get_pattern(client_dll, CXOR("8B 0E 33 4D FC 81 E1 ? ? ? ? 31 0E 88 46 03 C1 F8 08 66 89 46 12 8B C6")).sub(XORN(0x45));
-		want_reticle_shown = memory::get_pattern(client_dll, CXOR("53 56 57 8B 3D ? ? ? ? 8B F1 85 FF"));
-		update_all_viewmodel_addons = memory::get_pattern(client_dll, CXOR("55 8B EC 83 E4 ? 83 EC ? 53 8B D9 56 57 8B 03 FF 90 ? ? ? ? 8B F8 89 7C 24 ? 85 FF 0F 84 ? ? ? ? 8B 17 8B CF"));
-
-		get_viewmodel = memory::get_pattern(client_dll, CXOR("55 8B EC 83 E4 ? 83 EC ? 53 8B D9 56 57 8B 03 FF 90 ? ? ? ? 8B F8 89 7C 24 ? 85 FF 0F 84 ? ? ? ? 8B 17 8B CF"));
-		calc_view = memory::get_pattern(client_dll, CXOR("55 8B EC 53 8B 5D ? 56 57 FF 75 ? 8B F1"));
-		get_hud_ptr = memory::get_pattern(client_dll, CXOR("B9 ? ? ? ? 0F 94 C0 0F B6 C0 50 68")).add(XORN(1));
-		draw_fog = memory::get_pattern(client_dll, CXOR("55 8B EC 8B 0D ? ? ? ? 83 EC 0C 8B 01 53"));
-		cl_move = memory::get_pattern(engine_dll, CXOR("55 8B EC 81 EC ? ? ? ? 53 56 57 8B 3D ? ? ? ? 8A"));
-		clear_killfeed = memory::get_pattern(client_dll, CXOR("E8 ? ? ? ? 68 ? ? ? ? B9 ? ? ? ? E8 ? ? ? ? 8B F0 85 F6 74 19")).relative(XORN(1));
-		physics_simulate = memory::get_pattern(client_dll, CXOR("56 8B F1 8B 8E ? ? ? ? 83 F9 ? 74 ? 0F B7 C1 C1 E0 ? 05 ? ? ? ? C1 E9 ? 39 48 ? 75 ? 8B 08 85 C9 74 ? 8B 01 FF 90 ? ? ? ? A1"));
-		send_datagram = memory::get_pattern(engine_dll, CXOR("55 8B EC 83 E4 F0 B8 ? ? ? ? E8 ? ? ? ? 56 57 8B F9 89 7C 24 18"));
-		list_leaves_in_box = memory::get_pattern(client_dll, CXOR("FF 52 18 8B 7D 08 8B")).add(XORN(3));
-		calc_viewmodel_view = memory::get_pattern(client_dll, CXOR("55 8B EC 83 EC 64 56 57"));
-		return_addr_cam_think = memory::get_pattern(client_dll, CXOR("85 C0 75 30 38 86"));
-		send_net_msg = memory::get_pattern(engine_dll, CXOR("55 8B EC 56 8B F1 8B 86 ? ? ? ? 85 C0 74 ? 48 83 F8 ? 77 ? 83 BE ? ? ? ? ? 8D 8E ? ? ? ? 74 ? 32 C0 84 C0 EB ? E8 ? ? ? ? 84 C0 EB ? 83 BE ? ? ? ? ? 0F 94 C0 84 C0 74 ? B0 ? 5E 5D C2 ? ? 53"));
-		return_addr_process_input = memory::get_pattern(client_dll, CXOR("84 C0 74 ? 68 ? ? ? ? 8D 8C 24"));
-		host_shutdown = memory::get_pattern(engine_dll, CXOR("55 8B EC 83 E4 ? 81 EC ? ? ? ? A0"));
-		destruct_voice_data_message = memory::get_pattern(engine_dll, CXOR("E8 ? ? ? ? 5E 8B E5 5D C3 CC CC CC CC CC CC CC CC CC CC CC CC 55 8B EC 83 E4 ? 51")).relative(XORN(1));
-		msg_voice_data = memory::get_pattern(engine_dll, CXOR("55 8B EC 83 E4 ? A1 ? ? ? ? 81 EC ? ? ? ? 53 56 8B F1 B9 ? ? ? ? 57 FF 50 ? 8B 7D"));
-		physics_run_think = memory::get_pattern(client_dll, CXOR("55 8B EC 83 EC ? 53 56 57 8B F9 8B 87 ? ? ? ? C1 E8"));
-		think = memory::get_pattern(client_dll, CXOR("55 8B EC 56 57 8B F9 8B B7 ? ? ? ? 8B C6"));
-		post_think_physics = memory::get_pattern(client_dll, CXOR("55 8B EC 83 E4 ? 81 EC ? ? ? ? 53 8B D9 56 57 83 BB"));
-		simulate_player_simulated_entities = memory::get_pattern(client_dll, CXOR("56 8B F1 57 8B BE ? ? ? ? 83 EF ? 78 ? 90"));
-		game_rules = memory::get_pattern(client_dll, CXOR("A1 ? ? ? ? 85 C0 0F 84 ? ? ? ? 80 B8 ? ? ? ? ? 0F 84 ? ? ? ? 0F 10 05")).add(XORN(1));
-
-		add_activity_modifier = memory::get_pattern(server_dll, CXOR("55 8B EC 8B 55 08 83 EC 30 56 8B F1 85 D2 0F 84 ? ? ? ? 8D 45 D0 8B C8 2B D1"));
-		get_weapon_prefix = memory::get_pattern(client_dll, CXOR("53 56 8B F1 57 33 FF 8B 4E ? 8B 01"));
-		find_mapping = memory::get_pattern(client_dll, CXOR("55 8B EC 83 E4 ? 81 EC ? ? ? ? 53 56 57 8B F9 8B 17"));
-		select_sequence_from_mods = memory::get_pattern(server_dll, CXOR("55 8B EC 83 EC ? 53 56 8B 75 ? 8B D9 57 89 5D ? 8B 16"));
-		get_sequence_desc = memory::get_pattern(client_dll, CXOR("55 8B EC 56 8B 75 ? 57 8B F9 85 F6 78 ? 8B 47"));
-		lookup_sequence = memory::get_pattern(client_dll, CXOR("55 8B EC 56 8B F1 83 BE ? ? ? ? ? 75 ? 8B 46 ? 8D 4E ? FF 50 ? 85 C0 74 ? 8B CE E8 ? ? ? ? 8B B6 ? ? ? ? 85 F6 74 ? 83 3E ? 74 ? 8B CE E8 ? ? ? ? 84 C0 74 ? FF 75"));
-		get_sequence_linear_motion = memory::get_pattern(client_dll, CXOR("55 8B EC 83 EC ? 56 8B F1 57 8B FA 85 F6 75 ? 68"));
-		update_layer_order_preset = memory::get_pattern(client_dll, CXOR("55 8B EC 51 53 56 57 8B F9 83 7F ? ? 0F 84"));
-
-		ik_ctx_construct = memory::get_pattern(client_dll, CXOR("56 8B F1 6A 00 6A 00 C7"));
-		ik_ctx_destruct = memory::get_pattern(client_dll, CXOR("56 8B F1 57 8D 8E ? ? ? ? E8 ? ? ? ? 8D 8E ? ? ? ? E8 ? ? ? ? 83 BE ? ? ? ? ?"));
-		ik_ctx_init = memory::get_pattern(client_dll, CXOR("55 8B EC 83 EC 08 8B 45 08 56 57 8B F9 8D 8F"));
-		ik_ctx_update_targets = memory::get_pattern(client_dll, CXOR("E8 ? ? ? ? 8B 47 FC 8D 4F FC F3 0F 10 44 24")).relative(XORN(1));
-		ik_ctx_solve_dependencies = memory::get_pattern(client_dll, CXOR("E8 ? ? ? ? 8B 44 24 40 8B 4D 0C")).relative(XORN(1));
-		bone_setup_init_pose = memory::get_pattern(client_dll, CXOR("55 8B EC 83 EC 10 53 8B D9 89 55 F8 56 57 89 5D F4 8B 0B 89 4D F0"));
-		accumulate_pose = memory::get_pattern(client_dll, CXOR("55 8B EC 83 E4 F0 B8 ? ? ? ? E8 ? ? ? ? A1"));
-		bone_setup_calc_autoplay_sequences = memory::get_pattern(client_dll, CXOR("55 8B EC 83 EC 10 53 56 57 8B 7D 10 8B D9 F3 0F 11 5D ?"));
-		bone_setup_calc_bone_adjust = memory::get_pattern(client_dll, CXOR("55 8B EC 83 E4 F8 81 EC ? ? ? ? 8B C1 89 54 24 04 89 44 24 2C 56 57 8B ?"));
-
-		show_and_update_selection = memory::get_pattern(client_dll, CXOR("E8 ? ? ? ? A1 ? ? ? ? F3 0F 10 40 ? C6 83")).relative(XORN(1));
-
-		view_render_beams = memory::get_pattern(client_dll, CXOR("B9 ? ? ? ? A1 ? ? ? ? FF 10 A1 ? ? ? ? B9")).add(XORN(1));
-		return_addr_show_radar = memory::get_pattern(client_dll, CXOR("84 C0 75 ? 8B CB E8 ? ? ? ? 84 C0 75 ? 83 BF"));
-		calc_roaming_view = memory::get_pattern(client_dll, CXOR("55 8B EC 83 E4 ? 81 EC ? ? ? ? 53 56 57 8B F9 8D 4C 24"));
-		return_addr_post_process = memory::get_pattern(client_dll, CXOR("85 C0 75 ? E8 ? ? ? ? 8B C8 E8 ? ? ? ? 32 DB"));
-		cache_sequences = memory::get_pattern(client_dll, CXOR("55 8B EC 83 E4 ? 83 EC ? 53 56 8B F1 57 8B 46 ? 85 C0 75"));
-		setup_weapon_action = memory::get_pattern(client_dll, CXOR("55 8B EC 83 E4 ? 83 EC ? 53 56 8B F1 57 8B 46 ? 85 C0 75"));
-		notify_on_layer_change_cycle = memory::get_pattern(client_dll, CXOR("55 8B EC 8B 45 ? 85 C0 74 ? 80 B9 ? ? ? ? ? 74 ? 56 8B B1 ? ? ? ? 85 F6 74 ? 8D 4D ? 51 50 8B CE E8 ? ? ? ? 84 C0 74 ? 83 7D ? ? 75 ? F3 0F 10 45 ? F3 0F 11 86 ? ? ? ? 5E 5D C2 ? ? CC CC CC CC CC CC CC CC CC CC 55 8B EC A1"));
-
-#else
 		view_render = memory::get_pattern(client_dll, CXOR("FF 50 14 E8 ? ? ? ? 5F")).sub(XORN(7));
 		glow_object_manager = memory::get_pattern(client_dll, CXOR("0F 11 05 ? ? ? ? 83 C8 01")).add(XORN(3));
 
@@ -327,6 +261,7 @@ namespace offsets
 		setup_flinch = memory::get_pattern(client_dll, CXOR("55 8B EC 51 56 8B 71 ? 83 BE ? ? ? ? ? 0F 84 ? ? ? ? 8B B6 ? ? ? ? 81 C6 ? ? ? ? 0F 84 ? ? ? ? F3 0F 10 56 ? 0F 28 C2 E8 ? ? ? ? 0F 57 DB 0F 2F D8 73 ? F3 0F 10 49 ? F3 0F 10 66 ? F3 0F 59 CA F3 0F 10 15"));
 		cache_sequences = memory::get_pattern(client_dll, CXOR("55 8B EC 83 E4 ? 83 EC ? 53 56 8B F1 57 8B 46"));
 
-#endif
+		// GaMeSeNsE
+		run_simulation = pattern::search("client.dll", "E8 ? ? ? ? A1 ? ? ? ? F3 0F 10 45 ? F3 0F 11 40").resolve_rip().get< void* >();
 	}
 }

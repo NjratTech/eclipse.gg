@@ -1,4 +1,7 @@
 #pragma once
+#include <memory>
+#include <windows.h>
+#include <psapi.h>
 
 #define OFFSET(name, type, offset) \
 INLINE type name() { \
@@ -45,6 +48,108 @@ INLINE type* func_name() { \
 	static std::uintptr_t offset = offsets::find_in_datamap(this->get_pred_desc_map(), HASH(name)); \
 	return (type*)((std::uintptr_t)this + offset); \
 }
+
+#define in_range( x, a, b ) ( x >= a && x <= b )
+#define get_bits( x ) ( in_range( ( x & ( ~0x20 ) ), 'A', 'F' ) ? ( ( x & ( ~0x20 ) ) - 'A' + 0xA ) : ( in_range( x, '0', '9' ) ? x - '0' : 0 ) )
+#define get_byte( x ) ( get_bits( x[ 0 ] ) << 4 | get_bits( x[ 1 ] ) )
+
+class pattern {
+	uintptr_t m_addr;
+
+public:
+	__forceinline pattern(std::uintptr_t addr) {
+		m_addr = addr;
+	}
+
+	template < typename t >
+	__forceinline t get() {
+		return t(m_addr);
+	}
+
+	__forceinline pattern sub(uintptr_t bytes) {
+		return pattern(m_addr - bytes);
+	}
+
+	__forceinline pattern add(std::uintptr_t bytes) {
+		return pattern(m_addr + bytes);
+	}
+
+	__forceinline pattern deref() {
+		return pattern(*reinterpret_cast<uintptr_t*>(m_addr));
+	}
+
+	__forceinline pattern resolve_rip() {
+		return pattern(m_addr + *reinterpret_cast<int*> (m_addr + 1) + 5);
+	}
+
+	__forceinline static void dbg_print(const char* msg, ...) {
+		if (!msg)
+			return;
+
+		static void(__cdecl * msg_fn)(const char*, va_list) = (decltype(msg_fn))(LI_FN(GetProcAddress)(LI_FN(GetModuleHandleA)("tier0.dll"), "Msg"));
+		char buffer[989];
+		va_list list;
+		va_start(list, msg);
+		vsprintf(buffer, msg, list);
+		va_end(list);
+		msg_fn(buffer, list);
+	}
+
+	static __declspec(noinline) pattern search(const char* mod, const char* pat) {
+		auto pat1 = const_cast<char*>(pat);
+		auto range_start = reinterpret_cast<uintptr_t>(LI_FN(GetModuleHandleA)(mod));
+
+		MODULEINFO mi;
+		LI_FN(K32GetModuleInformation)(LI_FN(GetCurrentProcess)(), reinterpret_cast<HMODULE>(range_start), &mi, sizeof(MODULEINFO));
+
+		auto end = range_start + mi.SizeOfImage;
+
+		uintptr_t first_match = 0;
+
+		for (uintptr_t current_address = range_start; current_address < end; current_address++) {
+			if (!*pat1) {
+				return pattern(first_match);
+			}
+
+			if (*reinterpret_cast<uint8_t*>(pat1) == '\?' || *reinterpret_cast<uint8_t*>(current_address) == get_byte(pat1)) {
+				if (!first_match)
+					first_match = current_address;
+
+				if (!pat1[2]) {
+					return pattern(first_match);
+				}
+
+				if (*reinterpret_cast<uint16_t*>(pat1) == '\?\?' || *reinterpret_cast<uint8_t*>(pat1) != '\?')
+					pat1 += 3;
+				else
+					pat1 += 2;
+			}
+			else {
+				pat1 = const_cast<char*>(pat);
+				first_match = 0;
+			}
+		}
+
+		pattern::dbg_print("Failed to find pattern \"%s\".\n", pat);
+
+		return pattern(0);
+	}
+};
+
+#define dbg_hook( a, b, c ) print_and_hook ( a, b, c, _( to_string ( b ) ) )
+auto print_and_hook = [](void* from, void* to, void** original, const char* func_name) {
+	if (!from)
+		return pattern::dbg_print("Invalid target function: %s\n", func_name);
+
+	//MessageBoxA( nullptr, func_name, func_name, 0 );
+
+	if (MH_CreateHook(from, to, original) != MH_OK)
+		return pattern::dbg_print("Hook creation failed: %s\n", func_name);
+
+	if (MH_EnableHook(from) != MH_OK)
+		return pattern::dbg_print("Hook enabling failed: %s\n", func_name);
+	// dbg_print ( _ ( "Hooked: %s\n" ), func_name );
+	};
 
 namespace offsets
 {
@@ -160,69 +265,6 @@ namespace offsets
 	inline memory::address_t interpolate_player;
 	inline memory::address_t reset_latched;
 
-#ifdef LEGACY
-	inline memory::address_t view_render;
-	inline memory::address_t glow_object_manager;
-	inline memory::address_t return_addr_loadout_allowed;
-	inline memory::address_t using_static_prop_debug;
-	inline memory::address_t build_transformations;
-	inline memory::address_t update_postscreen_effects;
-	inline memory::address_t get_sequence_activity;
-	inline memory::address_t modify_eye_position;
-	inline memory::address_t init_key_values;
-	inline memory::address_t want_reticle_shown;
-	inline memory::address_t update_all_viewmodel_addons;
-	inline memory::address_t get_viewmodel;
-	inline memory::address_t calc_view;
-	inline memory::address_t get_hud_ptr;
-	inline memory::address_t draw_fog;
-	inline memory::address_t cl_move;
-	inline memory::address_t clear_killfeed;
-	inline memory::address_t physics_simulate;
-	inline memory::address_t send_datagram;
-	inline memory::address_t list_leaves_in_box;
-	inline memory::address_t calc_viewmodel_view;
-	inline memory::address_t return_addr_cam_think;
-	inline memory::address_t send_net_msg;
-	inline memory::address_t return_addr_process_input;
-	inline memory::address_t host_shutdown;
-	inline memory::address_t destruct_voice_data_message;
-	inline memory::address_t msg_voice_data;
-	inline memory::address_t physics_run_think;
-	inline memory::address_t think;
-	inline memory::address_t post_think_physics;
-	inline memory::address_t simulate_player_simulated_entities;
-	inline memory::address_t game_rules;
-	inline memory::address_t return_addr_send_datagram_cl_move;
-	inline memory::address_t add_activity_modifier;
-	inline memory::address_t get_weapon_prefix;
-	inline memory::address_t find_mapping;
-	inline memory::address_t select_sequence_from_mods;
-	inline memory::address_t get_sequence_desc;
-	inline memory::address_t lookup_sequence;
-	inline memory::address_t get_sequence_linear_motion;
-	inline memory::address_t update_layer_order_preset;
-
-	inline memory::address_t ik_ctx_construct;
-	inline memory::address_t ik_ctx_destruct;
-	inline memory::address_t ik_ctx_init;
-	inline memory::address_t ik_ctx_update_targets;
-	inline memory::address_t ik_ctx_solve_dependencies;
-	inline memory::address_t bone_setup_init_pose;
-	inline memory::address_t accumulate_pose;
-	inline memory::address_t bone_setup_calc_autoplay_sequences;
-	inline memory::address_t bone_setup_calc_bone_adjust;
-
-	inline memory::address_t show_and_update_selection;
-	inline memory::address_t view_render_beams;
-	inline memory::address_t return_addr_show_radar;
-	inline memory::address_t calc_roaming_view;
-	inline memory::address_t return_addr_post_process;
-	inline memory::address_t cache_sequences;
-	inline memory::address_t setup_weapon_action;
-	inline memory::address_t notify_on_layer_change_cycle;
-
-#else
 	inline memory::address_t view_render;
 	inline memory::address_t glow_object_manager;
 	inline memory::address_t return_addr_loadout_allowed;
@@ -297,7 +339,7 @@ namespace offsets
 	inline memory::address_t setup_whole_body_action;
 	inline memory::address_t setup_flinch;
 	inline memory::address_t cache_sequences;
-#endif
+	inline void const* run_simulation;
 
 	extern void init();
 }

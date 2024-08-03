@@ -1,6 +1,9 @@
 # Prerequisites
 *.d
 
+# Visual Studio 2015/2017 cache/options directory
+.vs/
+
 # Compiled Object files
 *.slo
 *.lo

@@ -12,6 +12,8 @@ private:
 		float fall_velocity{};
 		float velocity_modifier{};
 		float stamina{};
+		float duck_amount{};
+		float duck_speed{};
 
 		vec3_t aimpunch{};
 		vec3_t viewpunch{};
@@ -36,6 +38,8 @@ private:
 			velocity = HACKS->local->velocity();
 			network_origin = HACKS->local->network_origin();
 			stamina = HACKS->local->stamina();
+			duck_amount = HACKS->local->duck_amount();
+			duck_speed = HACKS->local->duck_speed();
 			cmd_number = tick;
 
 			filled = true;

@@ -16,11 +16,12 @@ void c_prediction_fix::fix_netvars(int tick)
 	if (netvars->cmd_number != tick)
 		return;
 
-	auto aim_punch_diff = netvars->aimpunch - HACKS->local->aim_punch_angle();
-	auto view_punch_diff = netvars->viewpunch - HACKS->local->view_punch_angle();
-	auto aim_punch_vel_diff = netvars->aimpunch_vel - HACKS->local->aim_punch_angle_vel();
-	auto view_offset_diff = netvars->viewoffset - HACKS->local->view_offset();
-	auto fall_velocity_diff = netvars->fall_velocity - HACKS->local->fall_velocity();
+	auto aim_punch_diff = HACKS->local->aim_punch_angle() - netvars->aimpunch;
+	auto view_punch_diff = HACKS->local->view_punch_angle() - netvars->viewpunch;
+	auto aim_punch_vel_diff = HACKS->local->aim_punch_angle_vel() - netvars->aimpunch_vel;
+	auto view_offset_diff = HACKS->local->view_offset() - netvars->viewoffset;
+	auto fall_velocity_diff = HACKS->local->fall_velocity() - netvars->fall_velocity;
+	auto duck_diff = HACKS->local->duck_amount() - netvars->duck_amount;
 
 	{
 		if (abs(aim_punch_diff.x) <= 0.03125f && abs(aim_punch_diff.y) <= 0.03125f && abs(aim_punch_diff.z) <= 0.03125f)
@@ -43,5 +44,10 @@ void c_prediction_fix::fix_netvars(int tick)
 
 		if (std::abs(fall_velocity_diff) <= 0.5f)
 			HACKS->local->fall_velocity() = netvars->fall_velocity;
+
+		if (abs(duck_diff) < 0.03125f) {
+			HACKS->local->duck_amount() = netvars->duck_amount;
+			HACKS->local->duck_speed() = netvars->duck_speed;
+		}
 	}
 }

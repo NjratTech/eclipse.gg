@@ -114,8 +114,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(DXSDK_Dir)\Include;$(SolutionDir)Libs\Freetype;$(SolutionDir)Libs;$(SolutionDir)Libs\PolyHook;$(SolutionDir)Libs\PolyHook\zydis\include;$(SolutionDir)Libs\PolyHook\zydis\dependencies\zycore\include;$(SolutionDir)Libs\PolyHook\build32\zydis;$(SolutionDir)Libs\PolyHook\build32\zydis\dependencies\zycore;D:\June 2010 SDK\Include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(DXSDK_Dir)Lib\x86;$(SolutionDir)Libs\Freetype;$(SolutionDir)Libs;$(SolutionDir)Libs\PolyHook\build32\Debug;$(SolutionDir)Libs\PolyHook\build32\zydis\Debug;D:\June 2010 SDK\Lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)\Libs\MinHook;$(DXSDK_Dir)\Include;$(SolutionDir)Libs\Freetype;$(SolutionDir)Libs;$(SolutionDir)Libs\PolyHook;$(SolutionDir)Libs\PolyHook\zydis\include;$(SolutionDir)Libs\PolyHook\zydis\dependencies\zycore\include;$(SolutionDir)Libs\PolyHook\build32\zydis;$(SolutionDir)Libs\PolyHook\build32\zydis\dependencies\zycore;D:\June 2010 SDK\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\Libs\MinHook;$(DXSDK_Dir)Lib\x86;$(SolutionDir)Libs\Freetype;$(SolutionDir)Libs;$(SolutionDir)Libs\PolyHook\build32\Debug;$(SolutionDir)Libs\PolyHook\build32\zydis\Debug;D:\June 2010 SDK\Lib\x86;$(LibraryPath)</LibraryPath>
     <TargetName>csgo_debug</TargetName>
     <OutDir>$(SolutionDir)\Bins\</OutDir>
   </PropertyGroup>
@@ -174,7 +174,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>freetype_debug.lib;minhook_lib.lib;zydis.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freetype_debug.lib;minhook_lib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Legacy Debug|Win32'">

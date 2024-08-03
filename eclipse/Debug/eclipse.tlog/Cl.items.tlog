@@ -1,0 +1,82 @@
+C:\Users\gravel1337\Desktop\eclipse.gg\animations.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\animations.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\anti_aim.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\anti_aim.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\bullet_tracers.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\bullet_tracers.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\buy_bot.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\buy_bot.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\bytesarray.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\bytesarray.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\chams.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\chams.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\checksum_crc32.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\checksum_crc32.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\clantag.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\clantag.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\cmd_shift.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\cmd_shift.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\convars.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\convars.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\detour_hooks.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\detour_hooks.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\engine_prediction.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\engine_prediction.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\entities.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\entities.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\esp.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\esp.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\esp_object_render.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\esp_object_render.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\eventlistener.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\eventlistener.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\event_logs.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\event_logs.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\exploits.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\exploits.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\fake_lag.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\fake_lag.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\fov_and_view.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\fov_and_view.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\game_movement.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\game_movement.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\globals.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\globals.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\dllmain.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\dllmain.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\glow.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\glow.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\grenade_prediction.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\grenade_prediction.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\hooks.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\hooks.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\hud_hacks.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\hud_hacks.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\imgui\imgui.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\imgui.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\imgui\imgui_draw.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\imgui_draw.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\imgui\imgui_freetype.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\imgui_freetype.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\imgui\imgui_impl_dx9.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\imgui_impl_dx9.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\imgui\imgui_impl_win32.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\imgui_impl_win32.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\imgui\imgui_widgets.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\imgui_widgets.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\interfaces.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\interfaces.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\Json\jsoncpp.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\jsoncpp.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\key_states.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\key_states.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\lagcomp.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\lagcomp.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\legacy ui\config_system.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\config_system.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\legacy ui\config_vars.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\config_vars.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\legacy ui\legacy_str.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\legacy_str.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\legacy ui\menu\menu elements\button.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\button.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\legacy ui\menu\menu elements\checkbox.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\checkbox.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\legacy ui\menu\menu elements\colorpicker.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\colorpicker.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\legacy ui\menu\menu elements\combobox.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\combobox.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\legacy ui\menu\menu elements\keybind.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\keybind.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\legacy ui\menu\menu elements\listbox.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\listbox.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\legacy ui\menu\menu elements\slider.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\slider.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\legacy ui\menu\menu elements\textbox.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\textbox.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\legacy ui\menu\menu.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\menu.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\legacy ui\menu\menu_indicators.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\menu_indicators.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\legacy ui\menu\menu_tabs.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\menu_tabs.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\legacy ui\menu\snow.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\snow.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\main_utils.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\main_utils.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\math.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\math.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\md5_pseudo_random.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\md5_pseudo_random.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\memory.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\memory.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\misc_structs.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\misc_structs.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\modules.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\modules.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\movement.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\movement.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\netvars.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\netvars.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\offsets.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\offsets.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\entlistener.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\entlistener.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\penetration.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\penetration.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\post_processing.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\post_processing.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\predfix.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\predfix.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\ragebot.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\ragebot.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\remove_projectiles.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\remove_projectiles.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\render.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\render.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\resolver.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\resolver.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\sdk_misc.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\sdk_misc.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\server_bones.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\server_bones.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\skins.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\skins.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\spoofers.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\spoofers.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\structs.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\structs.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\thirdperson.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\thirdperson.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\threaded_animstate.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\threaded_animstate.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\threads.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\threads.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\vgui_panel.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\vgui_panel.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\vmt_hooks.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\vmt_hooks.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\world_modulation.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\world_modulation.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\xorpointer.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\xorpointer.obj
+C:\Users\gravel1337\Desktop\eclipse.gg\xorstr.cpp;C:\Users\gravel1337\Desktop\eclipse.gg\eclipse\Debug\xorstr.obj
