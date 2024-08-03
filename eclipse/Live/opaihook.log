@@ -1,8 +1,8 @@
-﻿  bullet_tracers.cpp
+﻿  engine_prediction.cpp
 LINK : warning LNK4098: библиотека по умолчанию "LIBCMT" конфликтует с использованием других библиотек; используйте /NODEFAULTLIB:library
   Создание кода
-  6 of 13019 functions (<0.1%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    181 functions had inline decision re-evaluated but remain unchanged
+  1273 of 13174 functions ( 9.7%) were compiled, the rest were copied from previous compilation.
+    155 functions were new in current compilation
+    742 functions had inline decision re-evaluated but remain unchanged
   Создание кода завершено
   opaihook.vcxproj -> C:\Users\gravel1337\Desktop\eclipse.gg\Bins\csgo-release.dll
