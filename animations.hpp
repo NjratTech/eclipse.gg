@@ -325,6 +325,7 @@ struct local_anims_t
 	float max_desync_range{};
 	float last_lby_time{};
 	float lby_angle{};
+	float poses{};
 
 	vec3_t eye_pos{};
 	vec3_t sent_eye_pos{};
@@ -355,6 +356,7 @@ struct local_anims_t
 		max_desync_range = 0.f;
 		last_lby_time = 0.f;
 		lby_angle = 0.f;
+		poses = 0.f;
 
 		eye_pos.reset();
 		sent_eye_pos.reset();

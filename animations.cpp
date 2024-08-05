@@ -8,225 +8,111 @@
 #include "engine_prediction.hpp"
 #include "ragebot.hpp"
 
-#ifdef _DEBUG
-#define DEBUG_SP 0
-uint8_t* get_server_edict(c_cs_player* player)
-{
-	static uintptr_t server_globals = **offsets::server_edict.add(0x2).cast< uintptr_t** >();
-	int max_clients = *(int*)((uintptr_t)server_globals + 0x18);
-	int index = player->index();
-	if (index > 0 && max_clients >= 1)
-	{
-		if (index <= max_clients)
-		{
-			int v10 = index * 16;
-			uintptr_t v11 = *(uintptr_t*)(server_globals + 96);
-			if (v11)
-			{
-				if (!((*(uintptr_t*)(v11 + v10) >> 1) & 1))
-				{
-					uintptr_t v12 = *(uintptr_t*)(v10 + v11 + 12);
-					if (v12)
-					{
-						uint8_t* ret = nullptr;
-						__asm
-						{
-							pushad
-							mov ecx, v12
-							mov eax, dword ptr[ecx]
-							call dword ptr[eax + 0x14]
-							mov ret, eax
-							popad
-						}
-
-						return ret;
-					}
-				}
-			}
-		}
-	}
-	return nullptr;
-}
-
-void draw_server_hitbox(c_cs_player* player)
-{
-	auto duration = HACKS->global_vars->interval_per_tick * 2.f;
-
-	auto server_player = get_server_edict(player);
-	if (server_player)
-	{
-		static auto call = offsets::draw_hitbox.cast< uintptr_t* >();
-
-		float current_duration = duration;
-
-		__asm
-		{
-			pushad
-			movss xmm1, current_duration
-			push 1
-			mov ecx, server_player
-			call call
-			popad
-		}
-	}
-}
-
-void draw_hitbox(c_cs_player* player, matrix3x4_t* bones, int idx, int idx2, bool dur = false)
-{
-	auto studio_model = HACKS->model_info->get_studio_model(player->get_model());
-	if (!studio_model)
-		return;
-
-	auto hitbox_set = studio_model->hitbox_set(0);
-	if (!hitbox_set)
-		return;
-
-	for (int i = 0; i < hitbox_set->num_hitboxes; i++)
-	{
-		auto hitbox = hitbox_set->hitbox(i);
-		if (!hitbox)
-			continue;
-
-		vec3_t vMin, vMax;
-		math::vector_transform(hitbox->min, bones[hitbox->bone], vMin);
-		math::vector_transform(hitbox->max, bones[hitbox->bone], vMax);
-
-		if (hitbox->radius != -1.f)
-			HACKS->debug_overlay->add_capsule_overlay(vMin, vMax, hitbox->radius, 255, 255 * idx, 255 * idx2, 150, dur ? HACKS->global_vars->interval_per_tick * 2 : 5.f, 0, 1);
-	}
-}
-#endif
-
-static INLINE void fix_land(anim_record_t* last_record, anim_record_t* record, c_cs_player* player)
-{
-	// legacy have different landfix because it anims only 1 tick and you have less data to detect smth
-#ifdef LEGACY
-	bool on_ground = player->flags().has(FL_ONGROUND);
-	record->on_ground = false;
-	record->real_on_ground = on_ground;
-
-	if (on_ground && last_record->real_on_ground)
-		record->on_ground = true;
-	else
-	{
-		if (record->layers[4].weight != 1.f && record->layers[4].weight == 1.f && record->layers[5].weight != 0.f)
-			record->on_ground = true;
-
-		if (on_ground)
-		{
-			bool ground = record->on_ground;
-			if (!last_record->real_on_ground)
-				ground = false;
-			record->on_ground = ground;
-		}
-	}
-#endif
-}
-
 void fix_velocity(anim_record_t* old_record, anim_record_t* last_record, anim_record_t* record, c_cs_player* player)
 {
-	auto state = player->animstate();
-	if (!state)
-		return;
+    auto state = player->animstate();
+    if (!state)
+        return;
 
-	auto weapon = (c_base_combat_weapon*)(HACKS->entity_list->get_client_entity_handle(player->active_weapon()));
-	if (!weapon)
-		return;
+    auto weapon = (c_base_combat_weapon*)(HACKS->entity_list->get_client_entity_handle(player->active_weapon()));
+    if (!weapon)
+        return;
 
-	auto weapon_info = HACKS->weapon_system->get_weapon_data(weapon->item_definition_index());
+    auto weapon_info = HACKS->weapon_system->get_weapon_data(weapon->item_definition_index());
 
-	// reset velocity on player teleport as server does
-	if (player->effects().has(EF_NOINTERP) || player->no_interp_parity() != player->no_interp_parity_old()) {
-		record->velocity.reset();
-		return;
-	}
+    // Reset velocity on player teleport as server does
+    if (player->effects().has(EF_NOINTERP) || player->no_interp_parity() != player->no_interp_parity_old()) {
+        record->velocity.reset();
+        return;
+    }
 
-	auto prev_record = last_record;
-	auto time_delta = TICKS_TO_TIME(record->choke);
+    auto prev_record = last_record;
+    auto time_delta = TICKS_TO_TIME(record->choke);
 
-	auto max_speed = weapon && weapon_info ?
-		std::max<float>((player->is_scoped() ? weapon_info->max_speed_alt : weapon_info->max_speed), 0.001f)
-		: CS_PLAYER_SPEED_RUN;
+    // Calculate maximum speed based on player state and weapon
+    auto max_speed = weapon && weapon_info ?
+        std::max<float>((player->is_scoped() ? weapon_info->max_speed_alt : weapon_info->max_speed), 0.001f)
+        : CS_PLAYER_SPEED_RUN;
 
-	if (player->is_walking())
-		max_speed *= CS_PLAYER_SPEED_WALK_MODIFIER;
+    if (player->is_walking())
+        max_speed *= CS_PLAYER_SPEED_WALK_MODIFIER;
 
-	if (player->duck_amount() >= 1.f)
-		max_speed *= CS_PLAYER_SPEED_DUCK_MODIFIER;
+    if (player->duck_amount() >= 1.f)
+        max_speed *= CS_PLAYER_SPEED_DUCK_MODIFIER;
 
-	if (prev_record) {
-		// get velocity based on direction
-		if (time_delta > 0.f)
-			record->velocity = (record->origin - prev_record->origin) / time_delta;
+    // Calculate velocity based on previous record and time delta
+    if (prev_record) {
+        if (time_delta > 0.f)
+            record->velocity = (record->origin - prev_record->origin) / time_delta;
 
-		if (record->flags.has(FL_ONGROUND) && prev_record->flags.has(FL_ONGROUND)) 
-		{
-			auto& layer_aliveloop = prev_record->layers[ANIMATION_LAYER_ALIVELOOP];
-			auto& new_layer_aliveloop = record->layers[ANIMATION_LAYER_ALIVELOOP];
+        // Adjust velocity based on aliveloop layer if on ground
+        if (record->flags.has(FL_ONGROUND) && prev_record->flags.has(FL_ONGROUND)) {
+            auto& layer_aliveloop = prev_record->layers[ANIMATION_LAYER_ALIVELOOP];
+            auto& new_layer_aliveloop = record->layers[ANIMATION_LAYER_ALIVELOOP];
 
-			auto anim_speed = 0.f;
-			if (layer_aliveloop.weight > 0.f && layer_aliveloop.weight < 0.1f
-				&& new_layer_aliveloop.playback_rate == layer_aliveloop.playback_rate)
-			{
-				auto anim_modifier = 0.35f * (1.0f - layer_aliveloop.weight);
+            // Calculate animation speed based on aliveloop layer weight
+            auto anim_speed = 0.f;
+            if (layer_aliveloop.weight > 0.f && layer_aliveloop.weight < 0.1f
+                && new_layer_aliveloop.playback_rate == layer_aliveloop.playback_rate) {
+                auto anim_modifier = 0.35f * (1.0f - layer_aliveloop.weight);
 
-				if (anim_modifier > 0.f && anim_modifier < 1.f)
-					anim_speed = max_speed * (anim_modifier + 0.55f);
-			}
+                if (anim_modifier > 0.f && anim_modifier < 1.f)
+                    anim_speed = max_speed * (anim_modifier + 0.55f);
+            }
 
-			auto length = record->velocity.length_2d();
+            // Adjust velocity based on animation speed
+            auto length = record->velocity.length_2d();
 
-			if (length > 0.1f && anim_speed > 0.0f)
-			{
-				anim_speed /= length;
-				record->velocity.x *= anim_speed;
-				record->velocity.y *= anim_speed;
-			}
-		}
+            if (length > 0.1f && anim_speed > 0.0f) {
+                anim_speed /= length;
+                record->velocity.x *= anim_speed;
+                record->velocity.y *= anim_speed;
+            }
+        }
 
-		if (record->flags.has(FL_ONGROUND))
-			record->velocity.z = 0.f;
-	}
-	else {
-		// with inital record we can't get correct values from aliveloop layer
-		// so, use networked movement layer to calculate correct velocity
-		if (record->flags.has(FL_ONGROUND)) {
-			auto& layer_movement = record->layers[ANIMATION_LAYER_MOVEMENT_MOVE];
+        // Set Z velocity to 0 if on ground
+        if (record->flags.has(FL_ONGROUND))
+            record->velocity.z = 0.f;
+    } else {
+        // Calculate velocity based on movement layer if no previous record
+        if (record->flags.has(FL_ONGROUND)) {
+            auto& layer_movement = record->layers[ANIMATION_LAYER_MOVEMENT_MOVE];
 
-			auto anim_speed = 0.f;
-			if (layer_movement.weight)
-				anim_speed = layer_movement.weight;
+            // Calculate animation speed based on movement layer weight
+            auto anim_speed = 0.f;
+            if (layer_movement.weight)
+                anim_speed = layer_movement.weight;
 
-			auto length = record->velocity.length_2d();
+            // Adjust velocity based on animation speed
+            auto length = record->velocity.length_2d();
 
-			if (length > 0.1f && anim_speed > 0.0f)
-			{
-				anim_speed /= length;
-				record->velocity.x *= anim_speed;
-				record->velocity.y *= anim_speed;
-			}
+            if (length > 0.1f && anim_speed > 0.0f) {
+                anim_speed /= length;
+                record->velocity.x *= anim_speed;
+                record->velocity.y *= anim_speed;
+            }
 
-			record->velocity.z = 0.f;
-		}
-	}
+            // Set Z velocity to 0 if on ground
+            record->velocity.z = 0.f;
+        }
+    }
 
-	auto move = &record->layers[ANIMATION_LAYER_MOVEMENT_MOVE];
-	auto lean = &record->layers[ANIMATION_LAYER_LEAN];
+    // Detect fakewalking
+    auto move = &record->layers[ANIMATION_LAYER_MOVEMENT_MOVE];
+    auto lean = &record->layers[ANIMATION_LAYER_LEAN];
 
-	if (prev_record)
-	{
-		auto prev_move = &prev_record->layers[ANIMATION_LAYER_MOVEMENT_MOVE];
-		if (record->choke >= 12
-			&& record->flags.has(FL_ONGROUND)
-			&& record->velocity.length_2d() > 0.1f
-			&& move->weight <= 0.1f
-			&& prev_move->cycle == move->cycle
-			&& move->playback_rate < 0.0001f)
-		{
-			record->fakewalking = true;
-			record->velocity.reset();
-		}
-	}
+    if (prev_record) {
+        auto prev_move = &prev_record->layers[ANIMATION_LAYER_MOVEMENT_MOVE];
+        if (record->choke >= 12
+            && record->flags.has(FL_ONGROUND)
+            && record->velocity.length_2d() > 0.1f
+            && move->weight <= 0.1f
+            && prev_move->cycle == move->cycle
+            && move->playback_rate < 0.0001f) {
+            record->fakewalking = true;
+            record->velocity.reset();
+        }
+    }
 }
 
 INLINE matrix_t* get_matrix_side(anim_record_t* new_record, int side)
@@ -252,21 +138,23 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 	if (!state)
 		return;
 
+	// Handle the case where there is no last record (first record or player coming out of dormant)
 	if (!last_record)
 	{
-		// this happens only when first record arrived or when enemy is out from dormant
-		// so we should set latest data as soon as possible
+		// Set latest data as soon as possible
 		state->primary_cycle = new_record->layers[ANIMATION_LAYER_MOVEMENT_MOVE].cycle;
 		state->move_weight = new_record->layers[ANIMATION_LAYER_MOVEMENT_MOVE].weight;
 
-		// fixes goalfeetyaw on spawn
+		// Fix goalfeetyaw on spawn
 		state->last_update_time = (new_record->sim_time - HACKS->global_vars->interval_per_tick);
 
+		// Update ground state and landing flag
 		if (player->flags().has(FL_ONGROUND)) {
 			state->on_ground = true;
 			state->landing = false;
 		}
 
+		// Handle jump animation
 		auto last_update_time = state->last_update_time;
 		auto layer_jump = &new_record->layers[ANIMATION_LAYER_MOVEMENT_JUMP_OR_FALL];
 		if (player->get_sequence_activity(layer_jump->sequence) == ACT_CSGO_JUMP) {
@@ -278,25 +166,29 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 				state->last_update_time = duration_in_air;
 			}
 		}
+
+		// Update strafe change
+		state->strafe_change_cycle = new_record->layers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].cycle;
+		state->strafe_change_weight = new_record->layers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].weight;
 	}
 	else
 	{
+		// Update primary cycle and move weight from the last record
 		state->primary_cycle = last_record->layers[ANIMATION_LAYER_MOVEMENT_MOVE].cycle;
 		state->move_weight = last_record->layers[ANIMATION_LAYER_MOVEMENT_MOVE].weight;
+
+		// Update strafe change
+		state->strafe_change_cycle = last_record->layers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].cycle;
+		state->strafe_change_weight = new_record->layers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].weight;
 	}
 
+	// Apply animation updates if needed
 	if (should_update)
 	{
+		// Handle the case where there is no last record or the choke is less than 2
 		if (!last_record || new_record->choke < 2)
 		{
-#ifdef LEGACY
-			resolver::apply_side(player, new_record, new_record->choke);
-			player->eye_angles() = new_record->eye_angles;
-
-			player->set_abs_origin(player->origin());
-			player->abs_velocity() = player->velocity() = new_record->velocity;
-			player->force_update_animations(anim);
-#else
+			// Handle jump animation if the player is not on ground
 			if (last_record && !player->flags().has(FL_ONGROUND))
 			{
 				auto layer_jump = &new_record->layers[ANIMATION_LAYER_MOVEMENT_JUMP_OR_FALL];
@@ -315,51 +207,20 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 				}
 			}
 
+			// Apply side-specific yaw or call resolver
 			if (side != 1337)
 				state->abs_yaw = math::normalize_yaw(new_record->eye_angles.y + state->get_max_rotation() * side);
-			else 
+			else
 				resolver::apply_side(player, new_record, new_record->choke);
 
+			// Update player origin, velocity, and force animation update
 			player->set_abs_origin(player->origin());
 			player->abs_velocity() = player->velocity() = new_record->velocity;
 			player->force_update_animations(anim);
-
-#endif
 		}
 		else
 		{
-#ifdef LEGACY
-			player->lower_body_yaw() = last_record->lby;
-			player->thirdperson_recoil() = last_record->thirdperson_recoil;
-
-			RESTORE(player->origin());
-
-			if (new_record->on_ground)
-				player->flags().force(FL_ONGROUND);
-			else
-				player->flags().remove(FL_ONGROUND);
-
-			player->abs_velocity() = player->velocity() = new_record->velocity;
-			player->set_abs_origin(player->origin());
-
-			resolver::apply_side(player, new_record, new_record->choke);
-			player->eye_angles() = new_record->eye_angles;
-
-			auto anim_time = new_record->old_sim_time + HACKS->global_vars->interval_per_tick;
-			if (new_record->shooting)
-			{
-				player->eye_angles() = new_record->last_reliable_angle;
-
-				if (new_record->last_shot_time <= anim_time)
-				{
-					player->eye_angles() = new_record->eye_angles;
-					player->lower_body_yaw() = new_record->lby;
-					player->thirdperson_recoil() = new_record->thirdperson_recoil;
-				}
-			}
-
-			player->force_update_animations(anim);
-#else
+			// Handle animation interpolation for choked packets
 			auto choke_float = static_cast<float>(new_record->choke);
 
 			auto simulation_time_tick = TIME_TO_TICKS(new_record->sim_time);
@@ -368,15 +229,11 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 			int land_time{}, jump_time{};
 			if (last_record)
 			{
-				// we have information that he is on ground now
-				// now let's guess, he is landing?
+				// Detect landing animation
 				if (player->flags().has(FL_ONGROUND)) {
 					auto layer_land = &new_record->layers[ANIMATION_LAYER_MOVEMENT_LAND_OR_CLIMB];
 					auto old_layer_land = &last_record->layers[ANIMATION_LAYER_MOVEMENT_LAND_OR_CLIMB];
 
-					// yes, he possibly landing now
-					// because of landing server info was sent to server
-					// now calculate start time where he was not landing on choke cycle
 					if (!last_record->flags.has(FL_ONGROUND) && layer_land->weight != 0.f && old_layer_land->weight == 0.f) {
 						auto sequence_activity = player->get_sequence_activity(layer_land->sequence);
 						if (sequence_activity == ACT_CSGO_LAND_LIGHT || sequence_activity == ACT_CSGO_LAND_HEAVY)
@@ -384,11 +241,10 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 					}
 				}
 				else {
+					// Detect jump animation
 					auto layer_jump = &new_record->layers[ANIMATION_LAYER_MOVEMENT_JUMP_OR_FALL];
 					auto old_layer_jump = &last_record->layers[ANIMATION_LAYER_MOVEMENT_JUMP_OR_FALL];
 
-					// another case - he is jumping now
-					// now calculate start time where he was not jumping on choke cycle
 					if (layer_jump->cycle != old_layer_jump->cycle
 						|| layer_jump->sequence != old_layer_jump->sequence
 						&& layer_jump->cycle < old_layer_jump->cycle) {
@@ -399,9 +255,11 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 				}
 			}
 
+			// Update lower body yaw and thirdperson recoil
 			player->lower_body_yaw() = last_record->lby;
 			player->thirdperson_recoil() = last_record->thirdperson_recoil;
 
+			// Interpolate animation data over the choke duration
 			for (int i = 0; i <= new_record->choke; ++i)
 			{
 				auto current_command_tick = prev_simulation_time + i;
@@ -410,6 +268,7 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 				auto current_float_tick = static_cast<float>(i);
 				float lerp_step = current_float_tick / choke_float;
 
+				// Handle landing animation
 				if (current_command_tick == land_time)
 				{
 					player->flags().force(FL_ONGROUND);
@@ -420,6 +279,7 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 					layer_land->playback_rate = record_layer_land->playback_rate;
 				}
 
+				// Handle jump animation
 				if (current_command_tick == jump_time - 1)
 					player->flags().force(FL_ONGROUND);
 
@@ -433,6 +293,7 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 					layer_jump->playback_rate = record_layer_jump->playback_rate;
 				}
 
+				// Interpolate origin, velocity, and duck amount
 				auto lerp_origin = math::lerp(lerp_step, last_record->origin, new_record->origin);
 				auto lerp_velocity = math::lerp(lerp_step, last_record->velocity, new_record->velocity);
 				auto lerp_duck_amount = math::lerp(lerp_step, last_record->duck_amt, new_record->duck_amt);
@@ -440,7 +301,8 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 				player->origin() = lerp_origin;
 				player->abs_velocity() = player->velocity() = lerp_velocity;
 				player->duck_amount() = lerp_duck_amount;
-	
+
+				// Handle shooting animation
 				if (new_record->shooting)
 				{
 					player->eye_angles() = new_record->last_reliable_angle;
@@ -453,33 +315,34 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 					}
 				}
 
+				// Update player origin and simulation time
 				player->set_abs_origin(player->origin());
-
 				RESTORE(player->sim_time());
-
 				player->sim_time() = current_command_time;
 
+				// Apply side-specific yaw or call resolver
 				auto max_rotation = 120.f;
 				if (side != 1337)
 					state->abs_yaw = math::normalize_yaw(player->eye_angles().y + max_rotation * side);
 				else
 					resolver::apply_side(player, new_record, new_record->choke);
 
+				// Force animation update
 				player->force_update_animations(anim);
 			}
-#endif
 		}
 	}
 
-#ifndef LEGACY
+	// Update collision bounds
 	auto collideable = player->get_collideable();
 	if (collideable)
 		offsets::set_collision_bounds.cast<void(__thiscall*)(void*, vec3_t*, vec3_t*)>()(collideable, &player->bb_mins(), &player->bb_maxs());
 
+	// Store collision change information
 	new_record->collision_change_origin = player->collision_change_origin();
 	new_record->collision_change_time = player->collision_change_time();
-#endif
 
+	// Invalidate bone cache and update lean layers
 	player->invalidate_bone_cache();
 	{
 		new_record->layers[ANIMATION_LAYER_LEAN].weight = player->animlayers()[ANIMATION_LAYER_LEAN].weight = 0.f;
@@ -487,14 +350,16 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 
 		anim->setup_bones = false;
 
+		// Get the correct matrix based on the side
 		auto matrix_side = get_matrix_side(new_record, side);
 
-		// store simulated layers
+		// Store simulated layers
 		player->store_layers(matrix_side->layers);
 
-		// restore layers
+		// Restore layers
 		player->set_layers(new_record->layers);
 
+		// Build bones for the selected side
 		matrix_side->bone_builder.store(player, matrix_side->matrix, 0x7FF00, hdr, flags_base, parent_count);
 		matrix_side->bone_builder.setup();
 	}
@@ -502,14 +367,16 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 
 void thread_collect_info(c_cs_player* player)
 {
+	// Check if the player's animation state is valid
 	auto state = player->animstate();
 	if (!state)
 		return;
 
 	auto index = player->index();
-
 	auto anim = ANIMFIX->get_anims(index);
 	auto backup = ANIMFIX->get_backup_record(index);
+
+	// Reset state and animation if the player pointer doesn't match
 	if (anim->ptr != player)
 	{
 		state->reset();
@@ -520,6 +387,7 @@ void thread_collect_info(c_cs_player* player)
 		return;
 	}
 
+	// Check if the player's studio header is valid
 	auto hdr = player->get_studio_hdr();
 	if (!hdr)
 	{
@@ -531,6 +399,7 @@ void thread_collect_info(c_cs_player* player)
 		return;
 	}
 
+	// Reset state and animation if the player is not alive
 	if (!player->is_alive())
 	{
 		state->reset();
@@ -539,55 +408,60 @@ void thread_collect_info(c_cs_player* player)
 		return;
 	}
 
+	// Handle player dormancy
 	if (player->dormant())
 	{
 		anim->old_simulation_time = 0.f;
 		anim->dormant_ticks = 0;
 		anim->records.clear();
 		backup->reset();
-
 		anim->update_anims = anim->setup_bones = true;
 		return;
 	}
 
+	// Increment dormant ticks if less than 3
 	if (anim->dormant_ticks < 3)
 		++anim->dormant_ticks;
 
+	// Return if the player's simulation time hasn't changed
 	if (player->sim_time() == player->old_sim_time())
 		return;
 
+	// Reset state if the player's spawn time has changed
 	if (anim->old_spawn_time != player->spawn_time())
 	{
 		state->player = player;
 		state->reset();
-
 		anim->old_spawn_time = player->spawn_time();
 		return;
 	}
 
 	auto max_ticks_size = HACKS->tick_rate;
 
+	// Store initial layers and update weapon layers
 	player->store_layers(resolver_info[player->index()].initial_layers);
 	player->update_weapon_dispatch_layers();
 
 	anim_record_t* last_record = nullptr;
 	anim_record_t* old_record = nullptr;
-	if (anim->records.size() > 0)
+
+	// Get the last and old records if they exist
+	if (!anim->records.empty())
 	{
 		last_record = &anim->records.front();
-
 		if (anim->records.size() >= 2)
 			old_record = &anim->records[1];
 	}
 
+	// Create a new record for the current animation state
 	auto& new_record = anim->records.emplace_front();
 	new_record.dormant = anim->dormant_ticks < 2;
 	new_record.store(player);
 	new_record.shifting = false;
 
+	// Fix velocity and handle animation layers if a last record exists
 	if (last_record)
 	{
-		fix_land(last_record, &new_record, player);
 		fix_velocity(old_record, last_record, &new_record, player);
 
 		auto layer_alive_loop = &new_record.layers[ANIMATION_LAYER_ALIVELOOP];
@@ -599,14 +473,11 @@ void thread_collect_info(c_cs_player* player)
 		auto current_cycle = layer_alive_loop->cycle;
 		auto previous_cycle = static_cast<int>(old_layer_alive_loop->cycle / (HACKS->global_vars->interval_per_tick * previous_playback_rate) + 0.5f);
 
-		auto cycle = 0;
+		int cycle = (current_playback_rate == previous_playback_rate)
+			? static_cast<int>(current_cycle / (current_playback_rate * HACKS->global_vars->interval_per_tick) + 0.5f)
+			: static_cast<int>(previous_cycle + ((current_cycle / current_playback_rate + (1.f - old_layer_alive_loop->cycle) / previous_playback_rate) / HACKS->global_vars->interval_per_tick + 0.5f));
 
-		if (current_playback_rate == previous_playback_rate)
-			cycle = static_cast<int>(current_cycle / (current_playback_rate * HACKS->global_vars->interval_per_tick) + 0.5f);
-		else
-			cycle = static_cast<int>(previous_cycle + ((current_cycle / current_playback_rate + (1.f - old_layer_alive_loop->cycle) / previous_playback_rate) / HACKS->global_vars->interval_per_tick + 0.5f));
-
-		auto layer_delta = cycle - previous_cycle;
+		int layer_delta = cycle - previous_cycle;
 		if (layer_delta <= 18)
 			new_record.choke = std::max(layer_delta, 1);
 
@@ -620,8 +491,7 @@ void thread_collect_info(c_cs_player* player)
 	auto bone_flags_base = hdr->bone_flags().base();
 	auto bone_parent_count = hdr->bone_parent_count();
 
-	bool should_update = true;
-
+	// Prepare animation layers
 	for (int i = 0; i < 13; i++)
 	{
 		auto layer = &player->animlayers()[i];
@@ -630,21 +500,21 @@ void thread_collect_info(c_cs_player* player)
 	}
 
 	backup->store(player);
+
 	{
 		resolver::prepare_side(player, &new_record, last_record);
 
-#ifndef LEGACY
 		math::memcpy_sse(&anim->old_animstate, player->animstate(), sizeof(anim->old_animstate));
 		for (int i = -1; i < 2; ++i)
 		{
-			update_sides(should_update, player, anim, &new_record, last_record, i, hdr, bone_flags_base, bone_parent_count);
+			update_sides(true, player, anim, &new_record, last_record, i, hdr, bone_flags_base, bone_parent_count);
 			math::memcpy_sse(player->animstate(), &anim->old_animstate, sizeof(anim->old_animstate));
 		}
-#endif
 
-		update_sides(should_update, player, anim, &new_record, last_record, 1337, hdr, bone_flags_base, bone_parent_count);
+		update_sides(true, player, anim, &new_record, last_record, 1337, hdr, bone_flags_base, bone_parent_count);
 	}
 
+	// Handle lag compensation
 	if (!HACKS->cl_lagcomp0)
 	{
 		if (last_record)
@@ -654,7 +524,7 @@ void thread_collect_info(c_cs_player* player)
 				anim->last_valid_time = new_record.sim_time + std::abs(last_record->sim_time - new_record.sim_time) + TICKS_TO_TIME(1);
 				new_record.shifting = true;
 			}
-			else 
+			else
 			{
 				if (anim->last_valid_time > new_record.sim_time)
 					new_record.shifting = true;
@@ -666,8 +536,9 @@ void thread_collect_info(c_cs_player* player)
 
 	backup->restore(player);
 
+	// Maintain the size of the records list
 	if (anim->records.size() > max_ticks_size - 1)
-		anim->records.erase(anim->records.end() - 1);
+		anim->records.pop_back();
 }
 
 void c_animation_fix::update_enemies()
@@ -675,7 +546,6 @@ void c_animation_fix::update_enemies()
 	LISTENER_ENTITY->for_each_player([&](c_cs_player* player)
 	{
 		THREAD_POOL->add_task(thread_collect_info, player);
-		//thread_collect_info(player);
 	});
 	THREAD_POOL->wait_all();
 }
@@ -700,81 +570,83 @@ INLINE void modify_eye_pos(vec3_t& pos, matrix3x4_t* matrix)
 	}
 }
 
-vec3_t c_animation_fix::get_eye_position(float angle)
+vec3_t c_animation_fix::get_eye_position(float pitch_angle)
 {
-	auto state = HACKS->local->animstate();
-	if (!state)
+	auto anim_state = HACKS->local->animstate();
+	if (!anim_state)
 		return {};
 
 	auto pose_param_body_pitch = XORN(12);
-	auto anim = &anims[HACKS->local->index()];
-	auto local_anim = &local_anims;
-	auto initial = ENGINE_PREDICTION->get_initial_vars();
+	auto anims_data = &anims[HACKS->local->index()];
+	auto local_anims_data = &local_anims;
+	auto initial_vars = ENGINE_PREDICTION->get_initial_vars();
 
+	// Save and temporarily set the absolute origin
 	auto old_abs_origin = HACKS->local->get_abs_origin();
-	HACKS->local->set_abs_origin(initial->origin);
+	HACKS->local->set_abs_origin(initial_vars->origin);
 
-	// store eye pos with unpredicted data
-	auto eye_pos = local_anim->eye_pos;
+	auto eye_pos = local_anims_data->eye_pos;
 
+	// Restore pose parameters
 	RESTORE(HACKS->local->pose_parameter()[pose_param_body_pitch]);
 
 	float pose = 0.f;
-	float normalized_pitch = angle;
+	float normalized_pitch = pitch_angle;
 
 	if (normalized_pitch > 180.f)
-		normalized_pitch = normalized_pitch - 360.f;
+		normalized_pitch -= 360.f;
 
 	normalized_pitch = std::clamp(normalized_pitch, -90.f, 90.f);
 	normalized_pitch = HACKS->local->studio_set_pose_parameter(pose_param_body_pitch, normalized_pitch, pose);
 
 	HACKS->local->pose_parameter()[pose_param_body_pitch] = pose;
 
-	HACKS->local->set_abs_angles({ 0.f, state->abs_yaw, 0.f });
+	// Set the absolute angles
+	HACKS->local->set_abs_angles({ 0.f, anim_state->abs_yaw, 0.f });
+
 	auto hdr = HACKS->local->get_studio_hdr();
 	if (hdr)
 	{
 		auto bone_flags_base = hdr->bone_flags().base();
 		auto bone_parent_count = hdr->bone_parent_count();
-		local_anim->bone_builder.store(HACKS->local, HACKS->local->bone_cache().base(), 0x7FF00, hdr, bone_flags_base, bone_parent_count);
-		local_anim->bone_builder.setup();
+		local_anims_data->bone_builder.store(HACKS->local, HACKS->local->bone_cache().base(), 0x7FF00, hdr, bone_flags_base, bone_parent_count);
+		local_anims_data->bone_builder.setup();
 
 		clamp_bones_info_t info{};
 		info.store(HACKS->local);
-		local_anim->bone_builder.clamp_bones_in_bbox(HACKS->local, HACKS->local->bone_cache().base(), 0x7FF00, HACKS->tickbase, HACKS->local->eye_angles(), info);
+		local_anims_data->bone_builder.clamp_bones_in_bbox(HACKS->local, HACKS->local->bone_cache().base(), 0x7FF00, HACKS->tickbase, HACKS->local->eye_angles(), info);
 
 		modify_eye_pos(eye_pos, HACKS->local->bone_cache().base());
-}
+	}
 
+	// Restore original absolute origin
 	HACKS->local->set_abs_origin(old_abs_origin);
 	return eye_pos;
 }
 
-void c_animation_fix::update_local()
-{
+void c_animation_fix::update_local() {
+	// Validate delta tick
 	if (HACKS->client_state->delta_tick == -1)
 		return;
 
+	// Get animation state
 	auto state = HACKS->local->animstate();
 	if (!state)
 		return;
 
 	auto anim = &anims[HACKS->local->index()];
-	if (anim->ptr != HACKS->local)
-	{
+	if (anim->ptr != HACKS->local) {
 		anim->reset();
 		local_anims.reset();
 		state->reset();
-
 		anim->ptr = HACKS->local;
 		return;
 	}
 
-	if (anim->old_spawn_time != HACKS->local->spawn_time())
-	{
+	// Check spawn time and reset if changed
+	if (anim->old_spawn_time != HACKS->local->spawn_time()) {
 		state->reset();
 		local_anims.reset();
-
 		anim->ptr = HACKS->local;
 		anim->old_spawn_time = HACKS->local->spawn_time();
 		return;
@@ -784,25 +656,34 @@ void c_animation_fix::update_local()
 	anim->setup_bones = false;
 	anim->dormant_ticks = 1;
 
+	// Backup current variables
 	RESTORE(HACKS->local->render_angles());
 	RESTORE(HACKS->local->eye_angles());
 	RESTORE(HACKS->global_vars->curtime);
 	RESTORE(HACKS->global_vars->frametime);
 
+	// Update global variables
 	HACKS->global_vars->curtime = TICKS_TO_TIME(HACKS->tickbase);
 	HACKS->global_vars->frametime = HACKS->global_vars->interval_per_tick;
 
+	// Update viewmodel
 	auto viewmodel = (c_base_entity*)(HACKS->entity_list->get_client_entity_handle(HACKS->local->viewmodel()));
-	if (viewmodel)
+	if (viewmodel) {
 		offsets::update_all_viewmodel_addons.cast<int(__fastcall*)(void*)>()(viewmodel);
+	}
 
+	// **Store initial layers and poses**
 	HACKS->local->store_layers(local_anims.backup_layers);
+	HACKS->local->store_poses(&local_anims.poses);
 
 	vec3_t eye_angles{};
-	if (HACKS->cmd->command_number >= HACKS->shot_cmd && HACKS->shot_cmd >= HACKS->cmd->command_number - HACKS->client_state->choked_commands)
+	if (HACKS->cmd->command_number >= HACKS->shot_cmd &&
+		HACKS->shot_cmd >= HACKS->cmd->command_number - HACKS->client_state->choked_commands) {
 		eye_angles = HACKS->input->get_user_cmd(HACKS->shot_cmd)->viewangles;
-	else
+	}
+	else {
 		eye_angles = HACKS->cmd->viewangles;
+	}
 
 	HACKS->local->render_angles() = HACKS->local->eye_angles() = eye_angles;
 
@@ -811,28 +692,26 @@ void c_animation_fix::update_local()
 		auto unpred_vars = ENGINE_PREDICTION->get_initial_vars();
 		unpred_vars->restore(true);
 
-		// Ensure the animation state is consistent
+		// Ensure animation state consistency
 		if (state->last_update_time == HACKS->global_vars->curtime)
 			state->last_update_time = HACKS->global_vars->curtime + HACKS->global_vars->interval_per_tick;
 
 		if (state->last_update_frame == HACKS->global_vars->framecount)
 			state->last_update_frame = HACKS->global_vars->framecount - 1;
 
-		// Update local player's animation state
+		// **Update animation state**
 		state->update(HACKS->local->eye_angles());
-
 	}
 	local_anims.old_vars.restore(true);
 
 	auto hdr = HACKS->local->get_studio_hdr();
-	if (hdr)
-	{
+	if (hdr) {
 		auto bone_flags_base = hdr->bone_flags().base();
 		auto bone_parent_count = hdr->bone_parent_count();
 		const auto& abs_origin = HACKS->local->get_abs_origin();
 
-		if (*HACKS->send_packet)
-		{
+		if (*HACKS->send_packet) {
+			// **Rebuild bones**
 			local_anims.bone_builder.store(HACKS->local, local_anims.matrix, 0x7FF00, hdr, bone_flags_base, bone_parent_count);
 			local_anims.bone_builder.setup();
 
@@ -852,13 +731,9 @@ void c_animation_fix::update_local()
 		}
 	}
 
+	// **Restore initial layers and poses after updating bones**
 	HACKS->local->set_layers(local_anims.backup_layers);
-
-	if (HACKS->local->is_alive())
-	{
-		// Update view angles to ensure consistency
-		HACKS->local->render_angles() = HACKS->local->eye_angles() = eye_angles;
-	}
+	HACKS->local->set_poses(&local_anims.poses);
 }
 
 void c_animation_fix::render_matrices(c_cs_player* player)

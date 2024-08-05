@@ -1,8 +1,19 @@
-﻿  engine_prediction.cpp
+﻿  animations.cpp
+  anti_aim.cpp
+  detour_hooks.cpp
+  esp.cpp
+  eventlistener.cpp
+  exploits.cpp
+  fake_lag.cpp
+  globals.cpp
+  movement.cpp
+  ragebot.cpp
+  resolver.cpp
+  vmt_hooks.cpp
 LINK : warning LNK4098: библиотека по умолчанию "LIBCMT" конфликтует с использованием других библиотек; используйте /NODEFAULTLIB:library
   Создание кода
-  1273 of 13174 functions ( 9.7%) were compiled, the rest were copied from previous compilation.
-    155 functions were new in current compilation
-    742 functions had inline decision re-evaluated but remain unchanged
+  1391 of 13079 functions (10.6%) were compiled, the rest were copied from previous compilation.
+    18 functions were new in current compilation
+    276 functions had inline decision re-evaluated but remain unchanged
   Создание кода завершено
   opaihook.vcxproj -> C:\Users\gravel1337\Desktop\eclipse.gg\Bins\csgo-release.dll

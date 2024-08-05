@@ -204,7 +204,7 @@ void c_menu::draw_ui_background()
 	auto image_pos_max = ImVec2((header_size.x / 2) + (image_size.x - 2), (header_size.y / 2) + (image_size.y - 2));
 
 	auto clr = g_cfg.misc.ui_color.base();
-	
+
 	auto letter = XOR("eclipse");
 
 	ImGui::PushFont(RENDER->fonts.dmg.get());
