@@ -52,13 +52,18 @@ INLINE bool valid_hitgroup(int index)
 
 bool can_hit_hitbox(const vec3_t& start, const vec3_t& end, rage_player_t* rage, int hitbox, matrix3x4_t* matrix, anim_record_t* record)
 {
+	if (!rage || !rage->player || !matrix)
+		return false;
+
 	auto model = rage->player->get_model();
 	if (!model)
 		return false;
 
-	auto studio_model = HACKS->model_info->get_studio_model(rage->player->get_model());
-	auto set = studio_model->hitbox_set(0);
+	auto studio_model = HACKS->model_info->get_studio_model(model);
+	if (!studio_model)
+		return false;
 
+	auto set = studio_model->hitbox_set(0);
 	if (!set)
 		return false;
 
@@ -67,106 +72,73 @@ bool can_hit_hitbox(const vec3_t& start, const vec3_t& end, rage_player_t* rage,
 		return false;
 
 	vec3_t min, max;
-
 	math::vector_transform(studio_box->min, matrix[studio_box->bone], min);
 	math::vector_transform(studio_box->max, matrix[studio_box->bone], max);
 
-	if (studio_box->radius != -1.f)
-		return math::segment_to_segment(start, end, min, max) < studio_box->radius;
+	const float radius = studio_box->radius;
 
-	c_game_trace trace{};
-	HACKS->engine_trace->clip_ray_to_entity({ start, end }, MASK_SHOT_HULL | CONTENTS_HITBOX, rage->player, &trace);
-
-	if (auto ent = trace.entity; ent)
+	if (radius > 0.f)
 	{
-		if (ent == rage->player)
+		vec3_t center = (min + max) * 0.5f;
+		vec3_t direction = end - start;
+		float distance = direction.normalized_float();
+
+		vec3_t point_on_ray = start + direction * std::clamp(direction.dot(center - start), 0.f, distance);
+		return (point_on_ray - center).length() <= radius;
+	}
+	else
+	{
+		c_game_trace trace;
+		ray_t ray(start, end);
+		HACKS->engine_trace->clip_ray_to_entity(ray, MASK_SHOT_HULL | CONTENTS_HITBOX, rage->player, &trace);
+
+		if (trace.entity == rage->player && valid_hitgroup(trace.hitgroup))
 		{
-			if (valid_hitgroup(trace.hitgroup))
-				return true;
+			return true;
 		}
 	}
 
 	return false;
 }
 
-float get_point_accuracy(rage_player_t* rage, vec3_t& eye_pos, const rage_point_t& point, matrix3x4_t* matrix, anim_record_t* record)
-{
-	static auto weapon_accuracy_nospread = HACKS->convars.weapon_accuracy_nospread;
-	if (weapon_accuracy_nospread && weapon_accuracy_nospread->get_bool())
-		return 1.f;
-
-	auto predicted_info = ENGINE_PREDICTION->get_networked_vars(HACKS->cmd->command_number);
-
-	auto hits = 0;
-
-	auto spread = predicted_info->spread + predicted_info->inaccuracy;
-	auto angle = math::calc_angle(eye_pos, point.aim_point).normalized_angle();
-
-	vec3_t forward, right, up;
-	math::angle_vectors(angle, &forward, &right, &up);
-
-	for (auto i = 1; i <= 6; ++i)
-	{
-		for (auto j = 0; j < 8; ++j)
-		{
-			auto current_spread = spread * ((float)i / 6.f);
-
-			float value = (float)j / 8.0f * (M_PI * 2.f);
-
-			auto direction_cos = std::cos(value);
-			auto direction_sin = std::sin(value);
-
-			auto spread_x = direction_sin * current_spread;
-			auto spread_y = direction_cos * current_spread;
-
-			vec3_t direction{};
-			direction.x = forward.x + spread_x * right.x + spread_y * up.x;
-			direction.y = forward.y + spread_x * right.y + spread_y * up.y;
-			direction.z = forward.z + spread_x * right.z + spread_y * up.z;
-
-			auto end = eye_pos + direction * HACKS->weapon_info->range;
-
-			if (can_hit_hitbox(eye_pos, end, rage, point.hitbox, matrix, record))
-				hits++;
-		}
-	}
-
-	return (float)hits / 48.f;
-}
-
 bool c_ragebot::can_fire(bool ignore_revolver)
 {
-	if (!HACKS->local || !HACKS->weapon)
+	if (!HACKS->local || !HACKS->weapon || !HACKS->weapon_info)
 		return false;
 
 	if (HACKS->cmd->weapon_select != 0)
 		return false;
 
-	if (!HACKS->weapon_info)
-		return false;
-
-	if (HACKS->local->flags().has(FL_ATCONTROLS))
-		return false;
-
-	if (HACKS->local->wait_for_no_attack())
-		return false;
-
-	if (HACKS->local->is_defusing())
-		return false;
-
-	if (HACKS->weapon_info->weapon_type >= 1 && HACKS->weapon_info->weapon_type <= 6 && HACKS->weapon->clip1() < 1)
+	if (HACKS->local->flags().has(FL_ATCONTROLS) || HACKS->local->wait_for_no_attack() || HACKS->local->is_defusing())
 		return false;
 
 	if (HACKS->local->player_state() > 0)
 		return false;
 
 	auto weapon_index = HACKS->weapon->item_definition_index();
+
+	// Check for empty clip
+	if (HACKS->weapon_info->weapon_type >= WEAPONTYPE_PISTOL && HACKS->weapon_info->weapon_type <= WEAPONTYPE_MACHINEGUN && HACKS->weapon->clip1() < 1)
+		return false;
+
+	// Burst fire weapons
 	if ((weapon_index == WEAPON_GLOCK || weapon_index == WEAPON_FAMAS) && HACKS->weapon->burst_shots_remaining() > 0)
 		return HACKS->predicted_time >= HACKS->weapon->next_burst_shot();
 
-	// TO-DO: auto revolver detection
+	// Revolver auto fire
 	if (weapon_index == WEAPON_REVOLVER && !ignore_revolver)
-		return revolver_fire;
+	{
+		static float next_revolver_time = 0.f;
+		if (HACKS->predicted_time >= next_revolver_time)
+		{
+			if (HACKS->weapon->postpone_fire_ready_time() > 0.f && HACKS->weapon->postpone_fire_ready_time() < HACKS->predicted_time)
+			{
+				next_revolver_time = HACKS->predicted_time + 0.234375f;
+				return true;
+			}
+		}
+		return false;
+	}
 
 	float next_attack = HACKS->local->next_attack();
 	float next_primary_attack = HACKS->weapon->next_primary_attack();

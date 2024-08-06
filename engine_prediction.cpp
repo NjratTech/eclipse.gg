@@ -66,6 +66,26 @@ void c_engine_prediction::start()
     HACKS->local->button_pressed() = buttons_changed & buttons;
     HACKS->local->button_released() = buttons_changed & (~buttons);
 
+    // Weapon selection
+    if (HACKS->cmd->weapon_select > 0 && HACKS->cmd->weapon_select < 0x2000) {
+        const auto weapon = (c_base_combat_weapon*)HACKS->entity_list->get_client_entity(HACKS->cmd->weapon_select);
+
+        if (weapon)
+        {
+            auto v10 = (*(int(__thiscall**)(c_base_combat_weapon*))(*(DWORD*)weapon + 28))(weapon);
+            if (v10)
+            {
+                auto v11 = (*(int(__thiscall**)(int))(*(DWORD*)v10 + 668))(v10);
+                auto v12 = v11;
+                if (v11)
+                {
+                    if ((*(int(__thiscall**)(int))(*(DWORD*)v11 + 1128))(v11) == *(DWORD*)(reinterpret_cast<uintptr_t>(HACKS->cmd) + 60))
+                        (*(void(__thiscall**)(c_cs_player*, int))(*(DWORD*)HACKS->local + 1316))(HACKS->local, v12);
+                }
+            }
+        }
+    }
+
     // Process movements and view angles
     HACKS->prediction->check_moving_ground(HACKS->local, HACKS->global_vars->frametime);
     HACKS->prediction->set_local_view_angles(HACKS->cmd->viewangles);

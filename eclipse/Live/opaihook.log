@@ -1,4 +1,4 @@
-﻿  penetration.cpp
+﻿  vmt_hooks.cpp
 LINK : warning LNK4098: библиотека по умолчанию "LIBCMT" конфликтует с использованием других библиотек; используйте /NODEFAULTLIB:library
   LINK : указан параметр /LTCG, но не требуется создание кода; удалите /LTCG из командной строки компоновки для повышения производительности компоновщика
   opaihook.vcxproj -> C:\Users\gravel1337\Desktop\eclipse.gg\Bins\csgo-release.dll

@@ -143,8 +143,7 @@ namespace hooks::vmt
 
 		if (HACKS->local && HACKS->tick_rate > 0 && HACKS->in_game && HACKS->client_state->delta_tick != -1)
 		{
-			// do animfix & store lagcomp records
-			if (stage == XORN(FRAME_NET_UPDATE_END))
+			if (stage == XORN(FRAME_NET_UPDATE_POSTDATAUPDATE_START)) // why postdataupdate? bcs if u use net_update, you actually get data later 
 			{
 				RAGEBOT->proceed_misses();
 

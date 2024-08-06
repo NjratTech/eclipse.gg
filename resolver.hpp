@@ -63,7 +63,4 @@ namespace resolver
 		for (auto& i : resolver_info)
 			i.reset();
 	}
-
-	extern void prepare_side(c_cs_player* player, anim_record_t* current, anim_record_t* last);
-	extern void apply_side(c_cs_player* player, anim_record_t* current, int choke);
 }

@@ -193,10 +193,10 @@ void c_menu::draw_ui_background()
 	auto window_pos = this->get_window_pos();
 
 	// Background
-	list->AddRectFilled(window_pos, ImVec2(window_pos.x + 720, window_pos.y + 520), ImColor(20, 20, 20, (int)(window_alpha)), 0.f);
+	list->AddRectFilled(window_pos, ImVec2(window_pos.x + 720, window_pos.y + 520), ImColor(20, 20, 20, (int)(window_alpha)), 4.f);
 
 	// Header
-	list->AddRectFilled(window_pos, ImVec2(window_pos.x + 720, window_pos.y + 40), ImColor(30, 30, 30, (int)(window_alpha)), 0.f);
+	list->AddRectFilled(window_pos, ImVec2(window_pos.x + 720, window_pos.y + 40), ImColor(30, 30, 30, (int)(window_alpha)), 4.f);
 
 	// Title
 	ImGui::PushFont(RENDER->fonts.dmg.get());

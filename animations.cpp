@@ -8,6 +8,10 @@
 #include "engine_prediction.hpp"
 #include "ragebot.hpp"
 
+// forward declarations for resolver
+void prepare_side(c_cs_player* player, anim_record_t* current, anim_record_t* last);
+void apply_side(c_cs_player* player, anim_record_t* current, int choke);
+
 void fix_velocity(anim_record_t* old_record, anim_record_t* last_record, anim_record_t* record, c_cs_player* player)
 {
     auto state = player->animstate();
@@ -211,7 +215,7 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 			if (side != 1337)
 				state->abs_yaw = math::normalize_yaw(new_record->eye_angles.y + state->get_max_rotation() * side);
 			else
-				resolver::apply_side(player, new_record, new_record->choke);
+				apply_side(player, new_record, new_record->choke);
 
 			// Update player origin, velocity, and force animation update
 			player->set_abs_origin(player->origin());
@@ -335,7 +339,7 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 				if (side != 1337)
 					state->abs_yaw = math::normalize_yaw(player->eye_angles().y + max_rotation * side);
 				else
-					resolver::apply_side(player, new_record, new_record->choke);
+					apply_side(player, new_record, new_record->choke);
 
 				// Force animation update
 				player->force_update_animations(anim);
@@ -546,7 +550,7 @@ void thread_collect_info(c_cs_player* player)
 	backup->store(player);
 
 	{
-		resolver::prepare_side(player, &new_record, last_record);
+		prepare_side(player, &new_record, last_record);
 
 		math::memcpy_sse(&anim->old_animstate, player->animstate(), sizeof(anim->old_animstate));
 		for (int i = -1; i < 2; ++i)
