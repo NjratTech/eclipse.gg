@@ -53,7 +53,7 @@ namespace resolver
 
         if (std::abs(delta_935) > 0.5f || std::abs(delta_937) > 0.5f)
         {
-            return (delta_935 > 0.f || delta_937 > 0.f) ? 1 : -1;
+            return (delta_935 > 0.f || delta_937 > 0.f) ? 1 : -1;   
         }
         return 0;
     }

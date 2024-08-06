@@ -188,46 +188,24 @@ void c_menu::window_end()
 void c_menu::draw_ui_background()
 {
 	auto list = this->get_draw_list();
-
 	auto alpha = this->get_alpha();
-	auto window_alpha = 255.f * this->get_alpha();
-
+	auto window_alpha = 255.f * alpha;
 	auto window_pos = this->get_window_pos();
 
-	auto header_size = ImVec2(720, 47);
-	// header
-	imgui_blur::create_blur(list, window_pos, ImVec2(window_pos.x + header_size.x, window_pos.y + header_size.y), c_color(255, 255, 255, window_alpha).as_imcolor(), 6.f, ImDrawCornerFlags_Top);
+	// Background
+	list->AddRectFilled(window_pos, ImVec2(window_pos.x + 720, window_pos.y + 520), ImColor(20, 20, 20, (int)(window_alpha)), 0.f);
 
-	// image
-	auto image_size = ImVec2(14, 14);
-	auto image_pos_min = ImVec2((header_size.x / 2) - (image_size.x - 2), (header_size.y / 2) - (image_size.y - 2));
-	auto image_pos_max = ImVec2((header_size.x / 2) + (image_size.x - 2), (header_size.y / 2) + (image_size.y - 2));
+	// Header
+	list->AddRectFilled(window_pos, ImVec2(window_pos.x + 720, window_pos.y + 40), ImColor(30, 30, 30, (int)(window_alpha)), 0.f);
 
-	auto clr = g_cfg.misc.ui_color.base();
-
-	auto letter = XOR("eclipse");
-
+	// Title
 	ImGui::PushFont(RENDER->fonts.dmg.get());
-	auto text_size = ImGui::CalcTextSize(letter.c_str());
-
-	list->AddImage(
-		(void*)logo_texture, window_pos + image_pos_min - ImVec2(text_size.x - 18, 0.f), window_pos + image_pos_max - ImVec2(text_size.x - 18, 0.f), ImVec2(0, 0), ImVec2(1, 1), clr.new_alpha(window_alpha).as_imcolor());
-
-	auto base_x = window_pos.x + image_pos_min.x - text_size.x + 18.f;
-	list->AddText(ImVec2(base_x + 30.f, window_pos.y + 13), c_color(255, 255, 255, 150.f * alpha).as_imcolor(), letter.c_str());
+	auto text_size = ImGui::CalcTextSize("eclipse");
+	list->AddText(ImVec2(window_pos.x + 20, window_pos.y + 10), ImColor(255, 255, 255, (int)(window_alpha)), "eclipse");
 	ImGui::PopFont();
 
-	// body
-	imgui_blur::create_blur(list, window_pos + ImVec2(0, 47), ImVec2(window_pos.x + 720, window_pos.y + 520), ImColor(80, 80, 80, (int)(window_alpha)), 6.f, ImDrawCornerFlags_Bot);
-
-	// header end (separator)
-	list->AddLine(window_pos + ImVec2(0, 46), window_pos + ImVec2(720, 46), c_color(255, 255, 255, 12.75f * alpha).as_imcolor());
-
-	// tab separator
-	list->AddLine(window_pos + ImVec2(160, 47), window_pos + ImVec2(160, 520), c_color(255, 255, 255, 12.75f * alpha).as_imcolor(), 1.f);
-
-	// border
-	list->AddRect(window_pos, ImVec2(window_pos.x + 720, window_pos.y + 520), c_color(100, 100, 100, 100.f * alpha).as_imcolor(), 6.f);
+	// Separator
+	list->AddLine(ImVec2(window_pos.x, window_pos.y + 40), ImVec2(window_pos.x + 720, window_pos.y + 40), ImColor(50, 50, 50, (int)(window_alpha)));
 }
 
 void c_menu::draw_tabs()

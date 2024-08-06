@@ -18,18 +18,19 @@ constexpr auto misc_ui_flags = ImGuiWindowFlags_NoSavedSettings
 | ImGuiWindowFlags_NoScrollbar
 | ImGuiWindowFlags_NoFocusOnAppearing;
 
+// TODO: rework this code
 std::string get_bind_type(int type)
 {
 	switch (type)
 	{
 	case 0:
-		return CXOR("[ enabled ]");
+		return CXOR("[always on]");
 		break;
 	case 1:
-		return CXOR("[ hold ]");
+		return CXOR("[on hold]");
 		break;
 	case 2:
-		return CXOR("[ toggled ]");
+		return CXOR("[on toggle]");
 		break;
 	}
 	return "";
@@ -113,11 +114,10 @@ void c_menu::draw_binds()
 		auto window_alpha = 255.f * alpha;
 
 		// header
-		imgui_blur::create_blur(list, window_pos, window_pos + ImVec2(keybinds_size.x, 32.f), c_color(255, 255, 255, window_alpha).as_imcolor(), 4.f, ImDrawCornerFlags_Top);
+		imgui_blur::create_blur(list, window_pos, window_pos + ImVec2(keybinds_size.x, 32.f), c_color(100, 100, 100, window_alpha).as_imcolor(), 4.f, ImDrawCornerFlags_Top);
 
-		list->AddImage((void*)keyboard_texture, ImVec2(window_pos.x + 51, window_pos.y + 9), ImVec2(window_pos.x + 67, window_pos.y + 25), ImVec2(0, 0), ImVec2(1, 1), c_color(255, 255, 255, window_alpha).as_imcolor());
-
-		list->AddText(ImVec2(window_pos.x + 75, window_pos.y + 8), c_color(255, 255, 255, window_alpha).as_imcolor(), CXOR("keybinds"));
+		auto text_size = ImGui::CalcTextSize(CXOR("Hotkeys"));
+		list->AddText(ImVec2(window_pos.x + (keybinds_size.x - text_size.x) / 2, window_pos.y + 8), c_color(255, 255, 255, window_alpha).as_imcolor(), CXOR("Hotkeys"));
 
 		list->AddLine(window_pos + ImVec2(0, 31.f), window_pos + ImVec2(keybinds_size.x, 31), c_color(255, 255, 255, 12.75f * alpha).as_imcolor());
 
@@ -186,35 +186,35 @@ void c_menu::draw_spectators()
 	static auto window_size = ImVec2(184, 40.f);
 
 	auto sanitize = [&](const char* name)
-	{
-		std::string tmp(name);
-
-		for (int i = 0; i < (int)tmp.length(); i++)
 		{
-			if ((
-				tmp[i] >= 'a' && tmp[i] <= 'z' ||
-				tmp[i] >= 'A' && tmp[i] <= 'Z' ||
-				tmp[i] >= '0' && tmp[i] <= '9' ||
-				tmp[i] == ' ' || tmp[i] == '.' || tmp[i] == '/' || tmp[i] == ':' ||
-				tmp[i] == ',' || tmp[i] == '_' || tmp[i] == '#' || tmp[i] == '$' ||
-				tmp[i] == '<' || tmp[i] == '>' || tmp[i] == '-' || tmp[i] == '+' ||
-				tmp[i] == '*' || tmp[i] == '%' || tmp[i] == '@' || tmp[i] == '(' ||
-				tmp[i] == ')' || tmp[i] == '{' || tmp[i] == '}' || tmp[i] == '[' || tmp[i] == ']' ||
-				tmp[i] == '!' || tmp[i] == '&' || tmp[i] == '~' || tmp[i] == '^'
-				) == false)
+			std::string tmp(name);
+
+			for (int i = 0; i < (int)tmp.length(); i++)
 			{
-				tmp[i] = '_';
+				if ((
+					tmp[i] >= 'a' && tmp[i] <= 'z' ||
+					tmp[i] >= 'A' && tmp[i] <= 'Z' ||
+					tmp[i] >= '0' && tmp[i] <= '9' ||
+					tmp[i] == ' ' || tmp[i] == '.' || tmp[i] == '/' || tmp[i] == ':' ||
+					tmp[i] == ',' || tmp[i] == '_' || tmp[i] == '#' || tmp[i] == '>' ||
+					tmp[i] == '<' || tmp[i] == '>' || tmp[i] == '-' || tmp[i] == '+' ||
+					tmp[i] == '*' || tmp[i] == '%' || tmp[i] == '@' || tmp[i] == '(' ||
+					tmp[i] == ')' || tmp[i] == '{' || tmp[i] == '}' || tmp[i] == '[' || tmp[i] == ']' ||
+					tmp[i] == '!' || tmp[i] == '&' || tmp[i] == '~' || tmp[i] == '^'
+					) == false)
+				{
+					tmp[i] = '_';
+				}
 			}
-		}
 
-		if (tmp.length() > 20)
-		{
-			tmp.erase(20, (tmp.length() - 20));
-			tmp.append("...");
-		}
+			if (tmp.length() > 20)
+			{
+				tmp.erase(20, (tmp.length() - 20));
+				tmp.append("...");
+			}
 
-		return tmp;
-	};
+			return tmp;
+		};
 
 	for (int i = 0; i < 50; ++i)
 	{
@@ -295,32 +295,28 @@ void c_menu::draw_spectators()
 		auto window_alpha = 255.f * alpha;
 
 		// header
-		imgui_blur::create_blur(list, window_pos, window_pos + ImVec2(keybinds_size.x, 32.f), c_color(255, 255, 255, window_alpha).as_imcolor(), 4.f, ImDrawCornerFlags_Top);
+		imgui_blur::create_blur(list, window_pos, window_pos + ImVec2(keybinds_size.x, 32.f), c_color(100, 100, 100, window_alpha).as_imcolor(), 4.f, ImDrawCornerFlags_Top);
 
-		list->AddImage((void*)spectator_texture,
-			ImVec2(window_pos.x + 41, window_pos.y + 9),
-			ImVec2(window_pos.x + 57, window_pos.y + 25),
-			ImVec2(0, 0), ImVec2(1, 1), 
-			c_color(255, 255, 255, window_alpha).as_imcolor());
-
+		auto text_size = ImGui::CalcTextSize(CXOR("Spectators"));
+		float text_x = window_pos.x + (keybinds_size.x - text_size.x) / 2;
 		list->AddText(
-			ImVec2(window_pos.x + 65, window_pos.y + 8),
+			ImVec2(text_x, window_pos.y + 8),
 			c_color(255, 255, 255, window_alpha).as_imcolor(),
-			CXOR("spectators"));
+			CXOR("Spectators"));
 
 		list->AddLine(
 			window_pos + ImVec2(0, 31.f),
-			window_pos + ImVec2(keybinds_size.x, 31), 
+			window_pos + ImVec2(keybinds_size.x, 31),
 			c_color(255, 255, 255, 12.75f * alpha).as_imcolor());
 
 		// body
-		imgui_blur::create_blur(list, 
-			window_pos + ImVec2(0, 32.f), 
-			window_pos + ImVec2(keybinds_size.x, 32.f + window_size.y), 
+		imgui_blur::create_blur(list,
+			window_pos + ImVec2(0, 32.f),
+			window_pos + ImVec2(keybinds_size.x, 32.f + window_size.y),
 			c_color(100, 100, 100, (int)(window_alpha)).as_imcolor(), 4.f, ImDrawCornerFlags_Bot);
 
 		// border
-		list->AddRect(window_pos, 
+		list->AddRect(window_pos,
 			ImVec2(window_pos.x + keybinds_size.x, window_pos.y + window_size.y),
 			c_color(100, 100, 100, 100.f * alpha).as_imcolor(),
 			4.f);
@@ -538,7 +534,7 @@ void c_menu::draw_bomb_indicator()
 		auto window_alpha = 255.f * alpha;
 
 		// header
-		imgui_blur::create_blur(list, window_pos, ImVec2(window_pos.x + bomb_size.x, window_pos.y + bomb_size.y), c_color(155, 155, 155, window_alpha).as_imcolor(), 8.f);
+		imgui_blur::create_blur(list, window_pos, ImVec2(window_pos.x + bomb_size.x, window_pos.y + bomb_size.y), c_color(100, 100, 100, window_alpha).as_imcolor(), 8.f);
 
 		list->AddImage((void*)bomb_texture, ImVec2(window_pos.x + 19, window_pos.y + 16), ImVec2(window_pos.x + 51, window_pos.y + 47), ImVec2(0, 0), ImVec2(1, 1), c_color(255, 255, 255, window_alpha).as_imcolor());
 
@@ -688,7 +684,7 @@ void c_menu::draw_watermark()
 		// left side
 		{
 			imgui_blur::create_blur(list, base_window_pos, base_window_pos + ImVec2{ prefix_size.x + 30.f, window_size.y - 3.f},
-				ImColor(255, 255, 255, 255), 3.f, ImDrawCornerFlags_Left);
+				ImColor(100, 100, 100, 255), 3.f, ImDrawCornerFlags_Left);
 
 			auto base_offset = ImVec2{ base_window_pos.x + 10.f, base_window_pos.y + 7.f };
 
