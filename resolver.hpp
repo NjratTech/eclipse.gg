@@ -1,16 +1,9 @@
 #pragma once
 #include "animations.hpp"
 
-constexpr int CACHE_SIZE = 2;
-constexpr int YAW_CACHE_SIZE = 8;
-constexpr auto MAX_TICKS = 3;
-
-// Constants for jitter detection
-constexpr float JITTER_DIFF_THRESHOLD = 10.0f;
-constexpr int JITTER_MAX_TICKS = 5;
-
-// Constants for bruteforce resolver
+constexpr int MAX_TICKS = 3;
 constexpr int BRUTEFORCE_CYCLE_LENGTH = 3;
+
 
 // Structure to store resolver information for each player
 struct resolver_info_t
@@ -50,30 +43,6 @@ struct resolver_info_t
 		return legit_ticks > fake_ticks;
 	}
 
-	// Jitter information
-	struct jitter_info_t
-	{
-		bool is_jitter = false;
-
-		// Yaw cache for jitter detection
-		float yaw_cache[YAW_CACHE_SIZE] = {};
-		int yaw_cache_offset = 0;
-
-		// Tick counters for static and jitter states
-		int static_ticks = 0;
-		int jitter_ticks = 0;
-
-		// Reset jitter information
-		void reset()
-		{
-			is_jitter = false;
-			yaw_cache_offset = 0;
-			static_ticks = 0;
-			jitter_ticks = 0;
-			std::memset(yaw_cache, 0, sizeof(yaw_cache));
-		}
-	} jitter;
-
 	// Reset resolver data
 	void reset()
 	{
@@ -82,7 +51,6 @@ struct resolver_info_t
 		legit_ticks = 0;
 		fake_ticks = 0;
 		mode = "";
-		jitter.reset();
 	}
 };
 

@@ -6,10 +6,6 @@
 
 namespace resolver
 {
-    constexpr int EXTENDED_YAW_CACHE_SIZE = 16;
-    constexpr float JITTER_THRESHOLD = 5.0f;
-    constexpr float FREESTAND_THRESHOLD = 35.0f;
-
     inline float calculate_average_yaw(const float* yaw_cache, int size)
     {
         float sin_sum = 0.0f, cos_sum = 0.0f;
@@ -31,31 +27,48 @@ namespace resolver
         return sum / (size - 1);
     }
 
-    inline void prepare_jitter(c_cs_player* player, resolver_info_t& resolver_info, anim_record_t* current)
+    inline float resolve_by_animations(c_cs_player* player, anim_record_t* current, anim_record_t* previous)
     {
-        auto& jitter = resolver_info.jitter;
+        float resolved_yaw = current->eye_angles.y;
 
-        jitter.yaw_cache[jitter.yaw_cache_offset % EXTENDED_YAW_CACHE_SIZE] = current->eye_angles.y;
-        jitter.yaw_cache_offset = (jitter.yaw_cache_offset + 1) % EXTENDED_YAW_CACHE_SIZE;
-
-        float avg_deviation = calculate_average_deviation(jitter.yaw_cache, EXTENDED_YAW_CACHE_SIZE);
-        jitter.is_jitter = avg_deviation > JITTER_THRESHOLD;
-    }
-
-    // wtf lol
-    // TODO: normal animlayer resolver
-    // for example: orig_delta = abs(serv_layers[ANIMATION_LAYER_MOVEMENT_MOVE].playback_rate - layers[ANIMATION_LAYER_MOVEMENT_MOVE].playback_rate); and etc.
-    inline int detect_side_from_animations(c_cs_player* player, anim_record_t* current)
-    {
-        auto& layers = current->layers;
-        float delta_935 = layers[ANIMATION_LAYER_MOVEMENT_MOVE].playback_rate - layers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].playback_rate;
-        float delta_937 = layers[ANIMATION_LAYER_MOVEMENT_MOVE].playback_rate - layers[ANIMATION_LAYER_LEAN].playback_rate;
-
-        if (std::abs(delta_935) > 0.5f || std::abs(delta_937) > 0.5f)
+        if (current->velocity.length_2d() <= 0.1f)
         {
-            return (delta_935 > 0.f || delta_937 > 0.f) ? 1 : -1;   
+            // Player is standing
+            float delta = math::angle_diff(current->eye_angles.y, player->animstate()->abs_yaw);
+            resolved_yaw = player->animstate()->abs_yaw + (delta > 0 ? -60.f : 60.f);
         }
-        return 0;
+        else
+        {
+            // Player is moving
+            if (previous &&
+                !((int)(current->layers[ANIMATION_LAYER_LEAN].weight * 1000.f)) &&
+                ((int)(current->layers[ANIMATION_LAYER_MOVEMENT_MOVE].weight * 1000.f) ==
+                    (int)(previous->layers[ANIMATION_LAYER_MOVEMENT_MOVE].weight * 1000.f)))
+            {
+                float orig_delta = std::abs(current->layers[ANIMATION_LAYER_MOVEMENT_MOVE].playback_rate -
+                    current->resolve_layers[ANIMATION_LAYER_MOVEMENT_MOVE][0].playback_rate);
+
+                float right_delta = std::abs(current->layers[ANIMATION_LAYER_MOVEMENT_MOVE].playback_rate -
+                    current->resolve_layers[ANIMATION_LAYER_MOVEMENT_MOVE][2].playback_rate);
+
+                float left_delta = std::abs(current->layers[ANIMATION_LAYER_MOVEMENT_MOVE].playback_rate -
+                    current->resolve_layers[ANIMATION_LAYER_MOVEMENT_MOVE][1].playback_rate);
+
+                if (orig_delta < right_delta || left_delta <= right_delta || (int)(right_delta * 1000.0f) == 0)
+                {
+                    if (orig_delta >= left_delta && right_delta > left_delta && (int)(left_delta * 1000.0f) == 0)
+                    {
+                        resolved_yaw = player->animstate()->abs_yaw + 60.f;
+                    }
+                }
+                else
+                {
+                    resolved_yaw = player->animstate()->abs_yaw - 60.f;
+                }
+            }
+        }
+
+        return math::normalize_yaw(resolved_yaw);
     }
 
     inline int detect_freestand(c_cs_player* player)
@@ -90,51 +103,28 @@ namespace resolver
         return 0;
     }
 
-    inline void resolve_jitter(c_cs_player* player, resolver_info_t& info, anim_record_t* current)
+    inline void resolve(c_cs_player* player, resolver_info_t& info, anim_record_t* current, anim_record_t* prev_record)
     {
         auto& misses = RAGEBOT->missed_shots[player->index()];
-        if (misses > 0)
-        {
-            info.side = (misses % 3) - 1; // Cycle through -1, 0, 1
-        }
-        else
-        {
-            float avg_yaw = calculate_average_yaw(info.jitter.yaw_cache, EXTENDED_YAW_CACHE_SIZE);
-            float diff = math::normalize_yaw(current->eye_angles.y - avg_yaw);
-            info.side = (diff > 0.f) ? -1 : 1;
-        }
-
-        info.resolved = true;
-        info.mode = XOR("jitter");
-    }
-
-    inline void resolve_static(c_cs_player* player, resolver_info_t& info, anim_record_t* current)
-    {
-        auto& misses = RAGEBOT->missed_shots[player->index()];
-        if (misses > 0)
+        if (misses > 1)
         {
             info.side = (misses % BRUTEFORCE_CYCLE_LENGTH) - 1;
             info.mode = XOR("brute");
         }
         else
         {
-            int anim_side = detect_side_from_animations(player, current);
+            float resolved_yaw = resolve_by_animations(player, current, prev_record);
             int freestand_side = detect_freestand(player);
 
-            if (anim_side != 0)
-            {
-                info.side = anim_side;
-                info.mode = XOR("anim");
-            }
-            else if (freestand_side != 0)
+            if (freestand_side != 0)
             {
                 info.side = freestand_side;
                 info.mode = XOR("freestand");
             }
             else
             {
-                info.side = 0;
-                info.mode = XOR("static");
+                info.side = (resolved_yaw > player->animstate()->abs_yaw) ? 1 : -1;
+                info.mode = XOR("anim");
             }
         }
         info.resolved = true;
@@ -168,22 +158,13 @@ namespace resolver
             return;
         }
 
-        prepare_jitter(player, info, current);
-
-        if (info.jitter.is_jitter)
-        {
-            resolve_jitter(player, info, current);
-        }
-        else
-        {
-            resolve_static(player, info, current);
-        }
+        resolve(player, info, current, last);
     }
 
     inline void apply_side(c_cs_player* player, anim_record_t* current, int choke)
     {
         auto& info = resolver_info[player->index()];
-        if (!HACKS->weapon_info || !HACKS->local || !HACKS->local->is_alive() || !info.resolved || player->is_teammate(false))
+        if (!HACKS->weapon_info || !HACKS->local || !HACKS->local->is_alive() || !info.resolved || player->is_teammate(false) || player->is_bot() || !g_cfg.rage.resolver)
             return;
 
         auto state = player->animstate();

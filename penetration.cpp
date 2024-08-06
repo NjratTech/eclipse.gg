@@ -109,43 +109,6 @@ namespace penetration
 		return range;
 	}
 
-	INLINE void clip_trace_to_players(const vec3_t& start, const vec3_t& end, unsigned int mask, i_trace_filter* filter, c_game_trace* tr, should_hit_fn should_hit)
-	{
-		float smallest_fraction = tr->fraction;
-
-		LISTENER_ENTITY->for_each_player([&](c_cs_player* player)
-		{
-			if (!player || player == HACKS->local)
-				return;
-
-			if (player->dormant() || !player->is_alive())
-				return;
-
-			if (should_hit && !should_hit(player, mask))
-				return;
-
-			auto collideable = player->get_collideable();
-			if (!collideable)
-				return;
-
-			auto obb_center = (collideable->get_mins() + collideable->get_maxs()) / 2.f;
-			auto position = obb_center + player->origin();
-			float range = distance_to_ray(position, start, end);
-
-			if (range < 0.f || range > 60.f)
-				return;
-
-			c_game_trace trace;
-			HACKS->engine_trace->clip_ray_to_entity(ray_t(start, end), mask, player, &trace);
-
-			if (trace.fraction < smallest_fraction)
-			{
-				*tr = trace;
-				smallest_fraction = trace.fraction;
-			}
-		}, false);
-	}
-
 	INLINE void clip_trace_to_player(const vec3_t start, const vec3_t& end, unsigned int mask, i_trace_filter* filter, c_game_trace* tr, c_cs_player* player, should_hit_fn should_hit)
 	{
 		if (should_hit && !should_hit(player, mask))
@@ -163,89 +126,90 @@ namespace penetration
 			return;
 
 		c_game_trace trace;
-		HACKS->engine_trace->clip_ray_to_entity(ray_t(start, end), mask, player, &trace);
+		HACKS->engine_trace->clip_ray_to_entity(ray_t(start, end), mask | CONTENTS_HITBOX, player, &trace);
 
 		if (tr->fraction > trace.fraction)
 			*tr = trace;
 	}
 
+	INLINE void clip_trace_to_players(const vec3_t& start, const vec3_t& end, unsigned int mask, i_trace_filter* filter, c_game_trace* tr, should_hit_fn should_hit)
+	{
+		float smallest_fraction = tr->fraction;
+
+		LISTENER_ENTITY->for_each_player([&](c_cs_player* player)
+			{
+				if (!player || player == HACKS->local)
+					return;
+
+				if (player->dormant() || !player->is_alive())
+					return;
+
+				if (should_hit && !should_hit(player, mask))
+					return;
+
+				clip_trace_to_player(start, end, mask, filter, tr, player, should_hit);
+			}, false);
+	}
+
 	bool trace_to_exit(c_game_trace* enter_trace, vec3_t start, vec3_t direction, c_game_trace* exit_trace, c_cs_player* player)
 	{
-		static auto sv_clip_penetration_traces_to_players = HACKS->convars.sv_clip_penetration_traces_to_players;
-
 		constexpr float MAX_DISTANCE = 90.f, STEP_SIZE = 4.f;
 		float current_distance = 0.f;
 
 		int first_contents = 0;
 
+		vec3_t end;
+
 		do
 		{
 			current_distance += STEP_SIZE;
-			auto new_end = start + (direction * current_distance);
+			end = start + (direction * current_distance);
 
 			if (!first_contents)
-				first_contents = HACKS->engine_trace->get_point_contents(new_end, MASK_SHOT_PLAYER);
+				first_contents = HACKS->engine_trace->get_point_contents(end, MASK_SHOT_HULL | CONTENTS_HITBOX);
 
-			int point_contents = HACKS->engine_trace->get_point_contents(new_end, MASK_SHOT_PLAYER);
+			int point_contents = HACKS->engine_trace->get_point_contents(end, MASK_SHOT_HULL | CONTENTS_HITBOX);
 
 			if (!(point_contents & MASK_SHOT_HULL) || ((point_contents & CONTENTS_HITBOX) && point_contents != first_contents))
 			{
-				auto new_start = new_end - (direction * STEP_SIZE);
+				vec3_t tr_end = end - (direction * STEP_SIZE);
 
-				HACKS->engine_trace->trace_ray(ray_t(new_end, new_start), MASK_SHOT_PLAYER, nullptr, exit_trace);
-
-				//	HACKS->debug_overlay->add_line_overlay(new_end, new_start, 255, 25, 255, 1.f, 0.1f);
+				HACKS->engine_trace->trace_ray(ray_t(end, tr_end), MASK_SHOT_HULL | CONTENTS_HITBOX, nullptr, exit_trace);
 
 				if (exit_trace->start_solid && exit_trace->surface.flags & SURF_HITBOX)
 				{
-#ifdef LEGACY
-					c_trace_filter_simple filter(player);
-#else
 					c_trace_filter_skip_two_entities filter(player, exit_trace->entity);
-#endif
-					HACKS->engine_trace->trace_ray(ray_t(start, new_start), MASK_SHOT_PLAYER, (i_trace_filter*)&filter, exit_trace);
+					HACKS->engine_trace->trace_ray(ray_t(end, start), MASK_SHOT_HULL | CONTENTS_HITBOX, (i_trace_filter*)&filter, exit_trace);
 
 					if (exit_trace->did_hit() && !exit_trace->start_solid)
 					{
-						new_end = exit_trace->end;
+						end = exit_trace->end;
 						return true;
 					}
-
 					continue;
 				}
-				else {
+				else if (exit_trace->did_hit() && !exit_trace->start_solid)
+				{
+					bool start_is_nodraw = enter_trace->surface.flags & SURF_NODRAW;
+					bool exit_is_nodraw = exit_trace->surface.flags & SURF_NODRAW;
 
-					if (!exit_trace->did_hit() || exit_trace->start_solid)
+					if (exit_is_nodraw && ((c_cs_player*)exit_trace->entity)->is_breakable() && ((c_cs_player*)enter_trace->entity)->is_breakable())
 					{
-						if (exit_trace->entity)
-						{
-							if (enter_trace->did_hit_non_world_entity())
-							{
-								if (((c_cs_player*)enter_trace->entity)->is_breakable())
-								{
-									exit_trace = enter_trace;
-									exit_trace->end = start + direction;
-									return true;
-								}
-							}
-						}
+						end = exit_trace->end;
+						return true;
 					}
-					else
+					else if ((!exit_is_nodraw || (start_is_nodraw && exit_is_nodraw)) && direction.dot(exit_trace->plane.normal) <= 1.0f)
 					{
-						if (((c_cs_player*)enter_trace->entity)->is_breakable() && ((c_cs_player*)exit_trace->entity)->is_breakable())
-							return true;
-
-						if (enter_trace->surface.flags & SURF_NODRAW || (!(exit_trace->surface.flags & SURF_NODRAW) && exit_trace->plane.normal.dot(direction) <= 1.f))
-						{
-							const float mult_amount = exit_trace->fraction * 4.f;
-
-							// get the real end pos
-							new_start -= direction * mult_amount;
-							return true;
-						}
-
-						continue;
+						auto final_end = (STEP_SIZE * exit_trace->fraction) * direction.length_2d();
+						end = end - vec3_t(final_end, final_end, final_end);
+						return true;
 					}
+				}
+				else if (enter_trace->did_hit_non_world_entity() && ((c_cs_player*)enter_trace->entity)->is_breakable())
+				{
+					*exit_trace = *enter_trace;
+					exit_trace->end = start + direction;
+					return true;
 				}
 			}
 		} while (current_distance <= MAX_DISTANCE);
@@ -278,7 +242,7 @@ namespace penetration
 		c_game_trace exit_trace = { };
 		if (!trace_to_exit(&enter_trace, enter_trace.end, direction, &exit_trace, player))
 		{
-			if ((HACKS->engine_trace->get_point_contents(enter_trace.end, MASK_SHOT_HULL) & MASK_SHOT_HULL) == 0)
+			if ((HACKS->engine_trace->get_point_contents(enter_trace.end, MASK_SHOT_HULL | CONTENTS_HITBOX) & MASK_SHOT_HULL | CONTENTS_HITBOX) == 0)
 				return true;
 		}
 
@@ -390,7 +354,7 @@ namespace penetration
 		const auto hdr = HACKS->model_info->get_studio_model(player->get_model());
 		if (!hdr)
 			return false;
-		
+
 		auto new_hdr = player->get_studio_hdr();
 		if (!new_hdr)
 			return false;
@@ -588,10 +552,10 @@ namespace penetration
 			auto extended_dest = source + direction * max_distance;
 			auto pass_filter = (i_trace_filter*)&filter;
 
-			HACKS->engine_trace->trace_ray(ray_t(source, extended_dest), MASK_SHOT_PLAYER, pass_filter, &enter_trace);
+			HACKS->engine_trace->trace_ray(ray_t(source, extended_dest), MASK_SHOT_PLAYER | CONTENTS_HITBOX, pass_filter, &enter_trace);
 
 			if (target)
-				clip_trace_to_player(source, extended_dest + direction * 40.f, MASK_SHOT_PLAYER, pass_filter, &enter_trace, target, filter.should_hit);
+				clip_trace_to_player(source, extended_dest + direction * 40.f, MASK_SHOT_PLAYER | CONTENTS_HITBOX, pass_filter, &enter_trace, target, filter.should_hit);
 			else
 				clip_trace_to_players(source, extended_dest + direction * 40.f, MASK_SHOT_PLAYER, pass_filter, &enter_trace, filter.should_hit);
 

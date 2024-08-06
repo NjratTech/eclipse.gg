@@ -4,6 +4,9 @@
 # Visual Studio 2015/2017 cache/options directory
 .vs/
 
+# Some project shit
+Bins/
+
 # Visual Studio Code directory
 .vscode/
 
@@ -12,6 +15,9 @@
 *.lo
 *.o
 *.obj
+*.tlog
+*.ipdb
+*.iobj
 
 # Precompiled Headers
 *.gch

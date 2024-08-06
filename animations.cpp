@@ -302,6 +302,16 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 				player->abs_velocity() = player->velocity() = lerp_velocity;
 				player->duck_amount() = lerp_duck_amount;
 
+				// Duck (crouch) fix (credits: estk)
+				if (player->flags().has(FL_DUCKING))
+				{
+					player->view_offset().z = math::lerp(lerp_step, 46.0f, 36.0f);
+				}
+				else
+				{
+					player->view_offset().z = 64.0f - (player->duck_amount() * 28.0f);
+				}
+
 				// Handle shooting animation
 				if (new_record->shooting)
 				{
@@ -363,6 +373,35 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 		matrix_side->bone_builder.store(player, matrix_side->matrix, 0x7FF00, hdr, flags_base, parent_count);
 		matrix_side->bone_builder.setup();
 	}
+}
+
+void update_layer(c_cs_player* player, anim_record_t* current, int side)
+{
+	auto state = player->animstate();
+
+	if (!state)
+		return;
+
+	// Get the correct yaw based on the side
+	// Sides: 1 = left, 2 = right, 0 = center
+	float yaw{ };
+	switch (side) {
+	case 1:
+		yaw = player->eye_angles().y - 58.f;
+		break;
+	case 2:
+		yaw = player->eye_angles().y + 58.f;
+		break;
+	default:
+		yaw = player->eye_angles().y;
+		break;
+	}
+
+	// Store layers
+	state->abs_yaw = math::normalize_yaw(player->eye_angles().y + yaw);
+	player->update_client_side_animation();
+	player->store_layers(current->resolve_layers[side]);
+
 }
 
 void thread_collect_info(c_cs_player* player)
@@ -459,6 +498,11 @@ void thread_collect_info(c_cs_player* player)
 	new_record.store(player);
 	new_record.shifting = false;
 
+	// Setup layers
+	update_layer(player, &new_record, 1);
+	update_layer(player, &new_record, 2);
+	update_layer(player, &new_record, 0);
+
 	// Fix velocity and handle animation layers if a last record exists
 	if (last_record)
 	{
@@ -529,10 +573,16 @@ void thread_collect_info(c_cs_player* player)
 				if (anim->last_valid_time > new_record.sim_time)
 					new_record.shifting = true;
 			}
+
+			if (new_record.sim_time < new_record.old_sim_time) {
+				new_record.break_lc = true;
+			}
 		}
 	}
-	else
+	else {
 		new_record.shifting = false;
+		new_record.break_lc = false;
+	}
 
 	backup->restore(player);
 

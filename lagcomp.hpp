@@ -73,11 +73,7 @@ public:
 
 		float delta_time = std::fabs(correct - (HACKS->predicted_time - sim_time));
 
-#ifdef LEGACY
-		return delta_time < 0.19f;
-#else
 		return delta_time < 0.2f && (sim_time >= static_cast<float>(dead_time));
-#endif
 	}
 
 	INLINE float get_lerp_time()

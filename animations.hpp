@@ -69,6 +69,7 @@ struct anim_record_t
 
 	std::uint32_t ground_entity{};
 	c_animation_layers layers[13]{};
+	c_animation_layers resolve_layers[13][3]{};
 
 #ifndef LEGACY
 	matrix_t matrix_left{};
