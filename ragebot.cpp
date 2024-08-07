@@ -485,20 +485,58 @@ void c_ragebot::update_predicted_eye_pos()
 		return;
 	}
 
-	auto last_predicted_velocity = velocity;
+	vec3_t last_predicted_velocity = velocity;
+	vec3_t last_predicted_origin = anim->eye_pos;
+	memory::bits_t flags = HACKS->local->flags();
+
 	for (int i = 0; i < max_predict_ticks; ++i)
 	{
-		auto pred_velocity = velocity * TICKS_TO_TIME(i + 1);
+		vec3_t pred_velocity = last_predicted_velocity;
+		vec3_t pred_origin = last_predicted_origin;
 
-		auto origin = anim->eye_pos + pred_velocity;
-		auto flags = HACKS->local->flags();
+		float speed = pred_velocity.length();
+		if (speed >= 0.1f)
+		{
+			float friction = HACKS->cvar->find_convar(CXOR("sv_friction"))->get_float();
+			float stop_speed = HACKS->cvar->find_convar(CXOR("sv_stopspeed"))->get_float();
+			float time = std::max(HACKS->global_vars->interval_per_tick, HACKS->global_vars->frametime);
 
-		game_movement::extrapolate(HACKS->local, origin, pred_velocity, flags, flags.has(FL_ONGROUND));
+			if (flags.has(FL_ONGROUND))
+			{
+				float control = (speed < stop_speed) ? stop_speed : speed;
+				float drop = control * friction * time;
+				float new_speed = std::max(0.f, speed - drop);
+				pred_velocity *= (new_speed / speed);
+			}
+		}
+
+		if (!flags.has(FL_ONGROUND))
+		{
+			float gravity = HACKS->cvar->find_convar(CXOR("sv_gravity"))->get_float() * 0.5f;
+			pred_velocity.z -= gravity * HACKS->global_vars->interval_per_tick;
+		}
+
+		pred_origin += pred_velocity * HACKS->global_vars->interval_per_tick;
+
+		c_game_trace trace;
+		c_trace_filter_simple filter(HACKS->local);
+		HACKS->engine_trace->trace_ray(ray_t(pred_origin, pred_origin, HACKS->local->bb_mins(), HACKS->local->bb_maxs()), MASK_PLAYERSOLID, (i_trace_filter*)&filter, &trace);
+
+		if (trace.fraction < 1.0f)
+		{
+			for (int j = 0; j < 2; j++)
+			{
+				pred_velocity[j] = pred_velocity[j] - trace.plane.normal[j] * pred_velocity.dot(trace.plane.normal);
+			}
+		}
+
+		game_movement::extrapolate(HACKS->local, pred_origin, pred_velocity, flags, flags.has(FL_ONGROUND));
 
 		last_predicted_velocity = pred_velocity;
+		last_predicted_origin = pred_origin;
 	}
 
-	predicted_eye_pos = anim->eye_pos + last_predicted_velocity;
+	predicted_eye_pos = last_predicted_origin;
 }
 
 void c_ragebot::prepare_players_for_scan()
@@ -566,7 +604,6 @@ std::vector<rage_point_t> get_hitbox_points(int damage, std::vector<int>& hitbox
 		point.aim_point = aim_point;
 		point.predicted_eye_pos = predicted;
 
-#ifndef LEGACY
 		point.safety = [&]()
 		{
 			auto safety = 0;
@@ -588,7 +625,6 @@ std::vector<rage_point_t> get_hitbox_points(int damage, std::vector<int>& hitbox
 
 			return safety;
 		}();
-#endif
 
 		out.emplace_back(point);
 	}
@@ -645,18 +681,14 @@ void player_move(c_cs_player* player, anim_record_t* record)
 
 bool start_fakelag_fix(c_cs_player* player, anims_t* anims)
 {
-	if (anims->records.empty())
+	if (anims->records.empty() || player->dormant())
 		return false;
 
-	if (player->dormant())
-		return false;
-
-	size_t size{};
+	size_t size = 0;
 	for (const auto& it : anims->records)
 	{
 		if (it.dormant)
 			break;
-
 		++size;
 	}
 
@@ -664,14 +696,7 @@ bool start_fakelag_fix(c_cs_player* player, anims_t* anims)
 	record->extrapolated = false;
 	record->predict();
 
-	if (record->choke <= 0)
-		return false;
-
-	if (size > 1 && ((record->origin - anims->records[1].origin).length_sqr() > 4096.f
-		|| size > 2 && (anims->records[1].origin - anims->records[2].origin).length_sqr() > 4096.f))
-		record->break_lc = true;
-
-	if (!record->break_lc)
+	if (record->choke <= 0 || !record->break_lc)
 		return false;
 
 	int simulation = TIME_TO_TICKS(record->sim_time);
@@ -679,13 +704,10 @@ bool start_fakelag_fix(c_cs_player* player, anims_t* anims)
 		return false;
 
 	int lag = record->choke;
-
 	int updatedelta = HACKS->client_state->clock_drift_mgr.server_tick - record->server_tick_estimation;
-	if (TIME_TO_TICKS(HACKS->outgoing) <= lag - updatedelta)
-		return false;
 
-	int next = record->server_tick_estimation + 1;
-	if (next + lag >= HACKS->arrival_tick)
+	if (TIME_TO_TICKS(HACKS->outgoing) <= lag - updatedelta ||
+		record->server_tick_estimation + 1 + lag >= HACKS->arrival_tick)
 		return false;
 
 	auto latency = std::clamp(TICKS_TO_TIME(HACKS->ping), 0.0f, 1.0f);
@@ -696,40 +718,36 @@ bool start_fakelag_fix(c_cs_player* player, anims_t* anims)
 	if (predicted_tick > 0 && predicted_tick < 20)
 	{
 		auto max_backtrack_time = std::ceil(((delta_time - 0.2f) / HACKS->global_vars->interval_per_tick + 0.5f) / (float)record->choke);
-		auto prediction_ticks = predicted_tick;
-
-		if (max_backtrack_time > 0.0f && predicted_tick >= TIME_TO_TICKS(max_backtrack_time))
-			prediction_ticks = TIME_TO_TICKS(max_backtrack_time);
+		auto prediction_ticks = std::min(predicted_tick, TIME_TO_TICKS(max_backtrack_time));
 
 		if (prediction_ticks > 0)
 		{
 			record->extrapolate_ticks = prediction_ticks;
 
-			do
+			for (int i = 0; i < prediction_ticks; ++i)
 			{
-				for (auto current_prediction_tick = 0; current_prediction_tick < record->choke; ++current_prediction_tick)
+				for (int j = 0; j < record->choke; ++j)
 				{
 					if (record->prediction.flags.has(FL_ONGROUND))
 					{
 						if (!HACKS->convars.sv_enablebunnyhopping->get_int())
 						{
-							float max = player->max_speed() * 1.1f;
+							float max_speed = player->max_speed() * 1.1f;
 							float speed = record->prediction.velocity.length();
-							if (max > 0.f && speed > max)
-								record->prediction.velocity *= (max / speed);
+							if (max_speed > 0.f && speed > max_speed)
+								record->prediction.velocity *= (max_speed / speed);
 						}
-
 						record->prediction.velocity.z = HACKS->convars.sv_jump_impulse->get_float();
 					}
 					else
+					{
 						record->prediction.velocity.z -= HACKS->convars.sv_gravity->get_float() * HACKS->global_vars->interval_per_tick;
+					}
 
 					player_move(player, record);
 					record->prediction.time += HACKS->global_vars->interval_per_tick;
 				}
-
-				--prediction_ticks;
-			} while (prediction_ticks);
+			}
 
 			auto current_origin = record->prediction.origin;
 

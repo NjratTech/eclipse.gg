@@ -23,7 +23,6 @@ void fix_velocity(anim_record_t* old_record, anim_record_t* last_record, anim_re
 
 	auto weapon_info = HACKS->weapon_system->get_weapon_data(weapon->item_definition_index());
 
-	// reset velocity on player teleport as server does
 	if (player->effects().has(EF_NOINTERP) || player->no_interp_parity() != player->no_interp_parity_old()) {
 		record->velocity.reset();
 		return;
@@ -39,11 +38,10 @@ void fix_velocity(anim_record_t* old_record, anim_record_t* last_record, anim_re
 	if (player->is_walking())
 		max_speed *= CS_PLAYER_SPEED_WALK_MODIFIER;
 
-	if (player->duck_amount() >= 1.f)
-		max_speed *= CS_PLAYER_SPEED_DUCK_MODIFIER;
+	if (player->duck_amount() > 0.f)
+		max_speed = math::lerp(player->duck_amount(), max_speed, max_speed * CS_PLAYER_SPEED_DUCK_MODIFIER);
 
 	if (prev_record) {
-		// get velocity based on direction
 		if (time_delta > 0.f)
 			record->velocity = (record->origin - prev_record->origin) / time_delta;
 
@@ -72,18 +70,32 @@ void fix_velocity(anim_record_t* old_record, anim_record_t* last_record, anim_re
 			}
 		}
 
-		if (record->flags.has(FL_ONGROUND))
-			record->velocity.z = 0.f;
+		if (!record->flags.has(FL_ONGROUND) && !prev_record->flags.has(FL_ONGROUND)) {
+			float air_speed = record->velocity.length_2d();
+			if (air_speed > 0.1f) {
+				float air_control = std::clamp(air_speed / 30.f, 0.f, 1.f);
+				float friction = std::max(0.f, 1.f - (HACKS->global_vars->frametime * 5.f * air_control));
+				record->velocity *= friction;
+			}
+		}
+
+		if (record->flags.has(FL_ONGROUND)) {
+			float speed = record->velocity.length();
+			if (speed > 0.1f) {
+				float friction = std::max(0.f, 1.f - (HACKS->global_vars->frametime * 5.5f));
+				record->velocity *= friction;
+			}
+		}
+
+		record->velocity.z = 0.f;
 	}
 	else {
-		// with inital record we can't get correct values from aliveloop layer
-		// so, use networked movement layer to calculate correct velocity
 		if (record->flags.has(FL_ONGROUND)) {
 			auto& layer_movement = record->layers[ANIMATION_LAYER_MOVEMENT_MOVE];
 
 			auto anim_speed = 0.f;
-			if (layer_movement.weight)
-				anim_speed = layer_movement.weight;
+			if (layer_movement.weight > 0.f)
+				anim_speed = layer_movement.weight * max_speed;
 
 			auto length = record->velocity.length_2d();
 
@@ -114,6 +126,18 @@ void fix_velocity(anim_record_t* old_record, anim_record_t* last_record, anim_re
 			record->fakewalking = true;
 			record->velocity.reset();
 		}
+	}
+
+	if (player->move_type() == MOVETYPE_LADDER) {
+		record->velocity = (record->origin - prev_record->origin) / time_delta;
+		record->velocity *= 0.5f;
+	}
+
+	float max_velocity = 260.f;
+	if (record->velocity.length_2d() > max_velocity) {
+		float ratio = max_velocity / record->velocity.length_2d();
+		record->velocity.x *= ratio;
+		record->velocity.y *= ratio;
 	}
 }
 
