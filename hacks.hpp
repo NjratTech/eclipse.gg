@@ -205,6 +205,8 @@ public:
     modules_t modules{};
     convars_t convars{};
 
+
+
     INLINE void reset_ctx_values() 
     {
         local = nullptr;

@@ -684,6 +684,7 @@ public:
 	NETVAR(entity_quality, int&, "DT_BaseAttributableItem", "m_iEntityQuality");
 	NETVAR(fallback_seed, int&, "DT_BaseAttributableItem", "m_nFallbackSeed");
 	NETVAR(item_id_high, int&, "DT_BaseAttributableItem", "m_iItemIDHigh");
+	NETVAR(item_id_low, int&, "DT_BaseAttributableItem", "m_iItemIDLow");
 	NETVAR(account_id, int&, "DT_BaseAttributableItem", "m_iAccountID");
 	NETVAR(zoom_level, int, "DT_WeaponCSBaseGun", "m_zoomLevel");
 	NETVAR(clip1, int, "DT_BaseCombatWeapon", "m_iClip1");

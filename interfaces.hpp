@@ -633,6 +633,31 @@ struct sticker_kit_t
     string_t item_name{};
 };
 
+class econ_item_definition {
+public:
+    VIRTUAL_METHOD(item_defenition_index_t, getWeaponId, 0, (), (this))
+    VIRTUAL_METHOD(const char*, getItemBaseName, 2, (), (this))
+    VIRTUAL_METHOD(const char*, getItemTypeName, 3, (), (this))
+    VIRTUAL_METHOD(const char*, getPlayerDisplayModel, 6, (), (this))
+    VIRTUAL_METHOD(const char*, getWorldDisplayModel, 7, (), (this))
+    VIRTUAL_METHOD(std::uint8_t, getRarity, 12, (), (this))
+
+    int getCapabilities() noexcept
+    {
+        return *reinterpret_cast<int*>(this + 0x148);
+    }
+
+    bool isPaintable() noexcept
+    {
+        return getCapabilities() & 1; // ITEM_CAP_PAINTABLE
+    }
+
+    const char* getDefinitionName() noexcept
+    {
+        return *reinterpret_cast<const char**>(this + 0x1DC);
+    }
+};
+
 class c_item_schema
 {
     PAD(0x28C);
@@ -645,6 +670,8 @@ private:
 
 public:
     head_t< int, sticker_kit_t* > sticker_kits{};
+
+    VIRTUAL_METHOD(econ_item_definition*, getItemDefinitionInterface, 4, (item_defenition_index_t id), (this, id))
 };
 
 class c_localize

@@ -237,6 +237,7 @@ namespace offsets
 	inline memory::address_t setup_whole_body_action;
 	inline memory::address_t setup_flinch;
 	inline memory::address_t cache_sequences;
+	inline memory::address_t equip_wearable;	
 
 	extern void init();
 }

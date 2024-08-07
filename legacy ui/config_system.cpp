@@ -816,13 +816,6 @@ namespace config
 			load_int(rage, CXOR("roll_amt"), g_cfg.rage.roll_amt);
 			load_int(rage, CXOR("roll_amt_pitch"), g_cfg.rage.roll_amt_pitch);
 
-#if ALPHA || _DEBUG || BETA
-			load_bool(rage, CXOR("round_lagcomp"), g_cfg.rage.round_lagcomp);
-			load_bool(rage, CXOR("delay_on_breaklc"), g_cfg.rage.delay_on_breaklc);
-			load_bool(rage, CXOR("jitterfix"), g_cfg.rage.jitterfix);
-			load_int(rage, CXOR("jitterfix_method"), g_cfg.rage.jitterfix_method);
-#endif
-
 			for (int i = 0; i < weapon_max; i++)
 			{
 				auto sub = CXOR("weapon_config_id ") + std::to_string(i + 1);
@@ -842,7 +835,6 @@ namespace config
 
 				load_uint(rage[sub], CXOR("quick_stop_options"), g_cfg.rage.weapon[i].quick_stop_options);
 				load_uint(rage[sub], CXOR("hitboxes"), g_cfg.rage.weapon[i].hitboxes);
-			//	load_uint(rage[sub], CXOR("hitchance_skips"), g_cfg.rage.weapon[i].hitchance_skips);
 			}
 		}
 

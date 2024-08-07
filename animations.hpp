@@ -69,7 +69,12 @@ struct anim_record_t
 
 	std::uint32_t ground_entity{};
 	c_animation_layers layers[13]{};
-	c_animation_layers resolve_layers[13][3]{};
+
+	// hardcoded shit
+	c_animation_layers layers_orig[13]{};
+	c_animation_layers layers_left[13]{};
+	c_animation_layers layers_right[13]{};
+	c_animation_layers layers_low[13]{};
 
 #ifndef LEGACY
 	matrix_t matrix_left{};

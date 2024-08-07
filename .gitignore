@@ -4,9 +4,6 @@
 # Visual Studio 2015/2017 cache/options directory
 .vs/
 
-# Some project shit
-Bins/
-
 # Visual Studio Code directory
 .vscode/
 
@@ -42,3 +39,7 @@ Bins/
 *.exe
 *.out
 *.app
+/Bins
+/eclipse
+/eclipse/Debug
+/eclipse/Live

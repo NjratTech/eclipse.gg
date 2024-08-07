@@ -14,6 +14,23 @@
 		return memory::get_virtual(memory::address_t(this), XORN(index)).cast<fn_t>()(this, __VA_ARGS__); \
 	}
 
+namespace virtual_method
+{
+	template <typename T, std::size_t Idx, typename ...Args>
+	constexpr T call(void* classBase, Args... args) noexcept
+	{
+		return (*reinterpret_cast<T(__thiscall***)(void*, Args...)>(classBase))[Idx](classBase, args...);
+	}
+}
+
+#define VIRTUAL_METHOD(returnType, name, idx, args, argsRaw) \
+returnType name args noexcept \
+{ \
+    return virtual_method::call<returnType, idx>argsRaw; \
+}
+
+#define VIRTUAL_METHOD_V(returnType, name, idx, args, argsRaw) VIRTUAL_METHOD(returnType, name, idx, args, argsRaw)
+
 namespace memory
 {
 	struct address_t
@@ -191,6 +208,7 @@ namespace memory
 		return (std::uintptr_t)module + offset.pointer;
 	}
 
+	extern uint64_t find_pattern(const char* szModule, const char* szSignature);
 	extern address_t get_pattern(HMODULE module, const char* pat);
 	extern address_t get_interface(HMODULE module, const char* inter);
 	extern address_t get_virtual(address_t ptr, const int& idx);

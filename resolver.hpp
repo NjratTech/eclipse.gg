@@ -22,27 +22,6 @@ struct resolver_info_t
 	// Initial layers
 	c_animation_layers initial_layers[13]{};
 
-	INLINE void add_legit_ticks()
-	{
-		if (legit_ticks < MAX_TICKS)
-			++legit_ticks;
-		else
-			fake_ticks = 0;
-	}
-
-	INLINE void add_fake_ticks()
-	{
-		if (fake_ticks < MAX_TICKS)
-			++fake_ticks;
-		else
-			legit_ticks = 0;
-	}
-
-	INLINE bool is_legit()
-	{
-		return legit_ticks > fake_ticks;
-	}
-
 	// Reset resolver data
 	void reset()
 	{
