@@ -3,9 +3,6 @@
 #include "server_bones.hpp"
 #include "animations.hpp"
 
-// pasted from legendware that was pasted from eexomi
-// works P since 2021
-
 namespace bone_merge
 {
 	std::uintptr_t& get_bone_merge(c_cs_player* player)
@@ -31,10 +28,8 @@ void clamp_bones_info_t::store(c_cs_player* player) {
 	if (!collideable)
 		return;
 
-#ifndef LEGACY
 	collision_change_time = player->collision_change_time();
 	collision_change_origin = player->collision_change_origin();
-#endif
 
 	auto& base_origin = player == HACKS->local ? player->get_abs_origin() : player->origin();
 	origin = base_origin;
@@ -303,11 +298,8 @@ void c_bone_builder::store(c_cs_player* player, matrix3x4_t* matrix, int mask, c
 	this->matrix = matrix;
 	this->mask = mask;
 
-#ifdef LEGACY
-	time = player->sim_time();
-#else
 	time = player == HACKS->local ? HACKS->predicted_time : player->sim_time();
-#endif
+
 	attachments = false;
 	ik_ctx = false;
 	dispatch = true;
@@ -334,21 +326,19 @@ void c_bone_builder::store(c_cs_player* player, matrix3x4_t* matrix, int mask, c
 
 void c_bone_builder::setup()
 {
-	alignas(16) vec3_t position[128] = { };
-	alignas(16) quaternion_t q[128] = { };
+	alignas(16) vec3_t position[128] = {};
+	alignas(16) quaternion_t q[128] = {};
 
 	auto ik_context = (c_ik_context*)animating->ik_ctx();
-
 	if (!ik_ctx)
 		ik_context = nullptr;
 
 	hdr = animating->get_studio_hdr();
-
 	if (!hdr)
 		return;
 
-	uint32_t bone_computed[8]{};
-	std::memset(bone_computed, 0, 8 * sizeof(uint32_t));
+	uint32_t bone_computed[8] = {};
+	std::memset(bone_computed, 0, sizeof(bone_computed));
 
 	bool sequences_available = !*(int*)(*(uintptr_t*)hdr + 0x150) || *(int*)((uintptr_t)hdr + 0x4);
 
@@ -365,9 +355,11 @@ void c_bone_builder::setup()
 		ik_context->solve_dependencies(position, q, matrix, (uint8_t*)bone_computed);
 	}
 	else if (sequences_available)
+	{
 		get_skeleton(position, q);
+	}
 
-	matrix3x4_t transform{};
+	matrix3x4_t transform;
 	transform.angle_matrix(angles, origin);
 
 	studio_build_matrices(hdr, transform, position, q, mask, matrix, bone_computed);
@@ -376,7 +368,6 @@ void c_bone_builder::setup()
 		animating->attachments_helper();
 
 	animating->last_bone_setup_time() = time;
-
 	animating->bone_accessor()->readable_bones |= mask;
 	animating->bone_accessor()->writable_bones |= mask;
 
@@ -397,27 +388,21 @@ void c_bone_builder::setup()
 	if (!hitbox_set)
 		return;
 
-	for (int i{}; i < hitbox_set->num_hitboxes; ++i)
+	for (int i = 0; i < hitbox_set->num_hitboxes; ++i)
 	{
 		const auto hitbox = hitbox_set->hitbox(i);
-		if (!hitbox
-			|| hitbox->radius >= 0.f)
+		if (!hitbox || hitbox->radius >= 0.f)
 			continue;
 
-		matrix3x4_t rot_mat{};
-		rot_mat.angle_matrix(hitbox->rotation);
-		rot_mat.contact_transforms(matrix[hitbox->bone]);
+		matrix3x4_t rot_matrix;
+		rot_matrix.angle_matrix(hitbox->rotation);
+		rot_matrix.contact_transforms(matrix[hitbox->bone]);
 	}
 
-#ifndef LEGACY
-	if (animating == HACKS->local)
-	{
-		clamp_bones_info_t info{};
-		info.store(animating);
+	clamp_bones_info_t info;
+	info.store(animating);
 
-		clamp_bones_in_bbox(animating, matrix, mask, time, animating->eye_angles(), info);
-	}
-#endif
+	clamp_bones_in_bbox(animating, matrix, mask, time, animating->eye_angles(), info);
 }
 
 INLINE bool can_be_animated(c_cs_player* player)

@@ -9,7 +9,7 @@
 #include "ragebot.hpp"
 
 // forward declarations for resolver
-void resolve(c_cs_player* player, anim_record_t* current, anim_record_t* last);
+void resolve(c_cs_player* player, anim_record_t* current);
 
 void fix_velocity(anim_record_t* old_record, anim_record_t* last_record, anim_record_t* record, c_cs_player* player)
 {
@@ -23,6 +23,7 @@ void fix_velocity(anim_record_t* old_record, anim_record_t* last_record, anim_re
 
 	auto weapon_info = HACKS->weapon_system->get_weapon_data(weapon->item_definition_index());
 
+	// reset velocity on player teleport as server does
 	if (player->effects().has(EF_NOINTERP) || player->no_interp_parity() != player->no_interp_parity_old()) {
 		record->velocity.reset();
 		return;
@@ -38,10 +39,11 @@ void fix_velocity(anim_record_t* old_record, anim_record_t* last_record, anim_re
 	if (player->is_walking())
 		max_speed *= CS_PLAYER_SPEED_WALK_MODIFIER;
 
-	if (player->duck_amount() > 0.f)
-		max_speed = math::lerp(player->duck_amount(), max_speed, max_speed * CS_PLAYER_SPEED_DUCK_MODIFIER);
+	if (player->duck_amount() >= 1.f)
+		max_speed *= CS_PLAYER_SPEED_DUCK_MODIFIER;
 
 	if (prev_record) {
+		// get velocity based on direction
 		if (time_delta > 0.f)
 			record->velocity = (record->origin - prev_record->origin) / time_delta;
 
@@ -70,32 +72,18 @@ void fix_velocity(anim_record_t* old_record, anim_record_t* last_record, anim_re
 			}
 		}
 
-		if (!record->flags.has(FL_ONGROUND) && !prev_record->flags.has(FL_ONGROUND)) {
-			float air_speed = record->velocity.length_2d();
-			if (air_speed > 0.1f) {
-				float air_control = std::clamp(air_speed / 30.f, 0.f, 1.f);
-				float friction = std::max(0.f, 1.f - (HACKS->global_vars->frametime * 5.f * air_control));
-				record->velocity *= friction;
-			}
-		}
-
-		if (record->flags.has(FL_ONGROUND)) {
-			float speed = record->velocity.length();
-			if (speed > 0.1f) {
-				float friction = std::max(0.f, 1.f - (HACKS->global_vars->frametime * 5.5f));
-				record->velocity *= friction;
-			}
-		}
-
-		record->velocity.z = 0.f;
+		if (record->flags.has(FL_ONGROUND))
+			record->velocity.z = 0.f;
 	}
 	else {
+		// with inital record we can't get correct values from aliveloop layer
+		// so, use networked movement layer to calculate correct velocity
 		if (record->flags.has(FL_ONGROUND)) {
 			auto& layer_movement = record->layers[ANIMATION_LAYER_MOVEMENT_MOVE];
 
 			auto anim_speed = 0.f;
-			if (layer_movement.weight > 0.f)
-				anim_speed = layer_movement.weight * max_speed;
+			if (layer_movement.weight)
+				anim_speed = layer_movement.weight;
 
 			auto length = record->velocity.length_2d();
 
@@ -127,18 +115,6 @@ void fix_velocity(anim_record_t* old_record, anim_record_t* last_record, anim_re
 			record->velocity.reset();
 		}
 	}
-
-	if (player->move_type() == MOVETYPE_LADDER) {
-		record->velocity = (record->origin - prev_record->origin) / time_delta;
-		record->velocity *= 0.5f;
-	}
-
-	float max_velocity = 260.f;
-	if (record->velocity.length_2d() > max_velocity) {
-		float ratio = max_velocity / record->velocity.length_2d();
-		record->velocity.x *= ratio;
-		record->velocity.y *= ratio;
-	}
 }
 
 static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t* anim, anim_record_t* new_record, anim_record_t* last_record, c_studio_hdr* hdr, int* flags_base, int parent_count)
@@ -151,6 +127,7 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 	{
 		state->primary_cycle = new_record->layers[ANIMATION_LAYER_MOVEMENT_MOVE].cycle;
 		state->move_weight = new_record->layers[ANIMATION_LAYER_MOVEMENT_MOVE].weight;
+
 		state->last_update_time = (new_record->sim_time - HACKS->global_vars->interval_per_tick);
 
 		if (player->flags().has(FL_ONGROUND)) {
@@ -178,6 +155,7 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 		state->strafe_change_weight = last_record->layers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].weight;
 		state->strafe_change_cycle = last_record->layers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].cycle;
 		state->acceleration_weight = last_record->layers[ANIMATION_LAYER_LEAN].cycle;
+		state->anim_duck_amount = player->duck_amount();
 	}
 
 	if (should_update)
@@ -202,20 +180,25 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 				}
 			}
 
-			resolve(player, new_record, last_record);
+			player->duck_amount() = new_record->duck_amt;
+			player->eye_angles() = new_record->eye_angles;
 
 			player->set_abs_origin(player->origin());
-			player->effects().remove(0x1000u);
 			player->abs_velocity() = player->velocity() = new_record->velocity;
+
+			resolve(player, new_record);
+
 			player->force_update_animations(anim);
+
 		}
 		else
 		{
 			auto choke_float = static_cast<float>(new_record->choke);
+
 			auto simulation_time_tick = TIME_TO_TICKS(new_record->sim_time);
 			auto prev_simulation_time = simulation_time_tick - new_record->choke;
 
-			int land_time = 0, jump_time = 0;
+			int land_time{}, jump_time{};
 			if (last_record)
 			{
 				if (player->flags().has(FL_ONGROUND)) {
@@ -276,14 +259,17 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 					layer_jump->playback_rate = record_layer_jump->playback_rate;
 				}
 
-				auto lerp_origin = math::lerp(lerp_step, last_record->origin, new_record->origin);
-				auto lerp_velocity = math::lerp(lerp_step, last_record->velocity, new_record->velocity);
-				auto lerp_duck_amount = math::lerp(lerp_step, last_record->duck_amt, new_record->duck_amt);
+				auto lerp_origin{ math::lerp(lerp_step, last_record->origin, new_record->origin) };
+				auto lerp_velocity{ math::lerp(lerp_step, last_record->velocity, new_record->velocity) };
+				auto lerp_eye_angles{ math::lerp(lerp_step, last_record->eye_angles, new_record->eye_angles) };
+				auto lerp_duck_amt{ math::lerp(lerp_step, last_record->duck_amt, new_record->duck_amt) };
+
+				player->duck_amount() = lerp_duck_amt;
+				player->eye_angles() = lerp_eye_angles;
 
 				player->origin() = lerp_origin;
-				player->effects().remove(0x1000u);
+
 				player->abs_velocity() = player->velocity() = lerp_velocity;
-				player->duck_amount() = lerp_duck_amount;
 
 				if (new_record->shooting)
 				{
@@ -302,8 +288,6 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 				RESTORE(player->sim_time());
 
 				player->sim_time() = current_command_time;
-
-				resolve(player, new_record, last_record);
 
 				player->force_update_animations(anim);
 			}
@@ -326,7 +310,10 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 
 		auto matrix_side = &new_record->matrix_orig;
 
+		// store simulated layers
 		player->store_layers(matrix_side->layers);
+
+		// restore layers
 		player->set_layers(new_record->layers);
 
 		matrix_side->bone_builder.store(player, matrix_side->matrix, 0x7FF00, hdr, flags_base, parent_count);
@@ -336,7 +323,7 @@ static INLINE void update_sides(bool should_update, c_cs_player* player, anims_t
 
 void setup_layers(c_cs_player* player, anim_record_t* new_record) {
 	auto state = player->animstate();
-	if (!state)
+	if (!state || !new_record)
 		return;
 
 	// Setup layers shit
