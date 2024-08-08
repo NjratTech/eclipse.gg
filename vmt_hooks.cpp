@@ -371,40 +371,12 @@ namespace hooks::vmt
 			return original(device);
 #endif
 
-		IDirect3DStateBlock9* d3d9_state_block = nullptr;
-		if (device->CreateStateBlock(D3DSBT_PIXELSTATE, &d3d9_state_block) < 0)
-			return original(device);
-
 		RENDER->set_device(device);
 		if (!RENDER->init())
 			return original(device);
 
-		DWORD colorwrite{}, srgbwrite{};
-		IDirect3DVertexDeclaration9* vert_dec = nullptr;
-		IDirect3DVertexShader9* vert_shader = nullptr;
-		DWORD dwOld_D3DRS_COLORWRITEENABLE = NULL;
-		device->GetRenderState(D3DRS_COLORWRITEENABLE, &colorwrite);
-		device->GetRenderState(D3DRS_SRGBWRITEENABLE, &srgbwrite);
-
-		DWORD multisample{}, antialias{};
-		device->GetRenderState(D3DRS_MULTISAMPLEANTIALIAS, &multisample);
-		device->GetRenderState(D3DRS_ANTIALIASEDLINEENABLE, &antialias);
-
-		device->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, FALSE);
-		device->SetRenderState(D3DRS_ANTIALIASEDLINEENABLE, FALSE);
-
-		device->SetRenderState(D3DRS_COLORWRITEENABLE, 0xffffffff);
-		device->SetRenderState(D3DRS_SRGBWRITEENABLE, false);
-
-		device->GetRenderState(D3DRS_COLORWRITEENABLE, &dwOld_D3DRS_COLORWRITEENABLE);
-		device->GetVertexDeclaration(&vert_dec);
-		device->GetVertexShader(&vert_shader);
-		device->SetRenderState(D3DRS_COLORWRITEENABLE, 0xffffffff);
-		device->SetRenderState(D3DRS_SRGBWRITEENABLE, false);
-		device->SetSamplerState(NULL, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-		device->SetSamplerState(NULL, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
-		device->SetSamplerState(NULL, D3DSAMP_ADDRESSW, D3DTADDRESS_WRAP);
-		device->SetSamplerState(NULL, D3DSAMP_SRGBTEXTURE, NULL);
+		IDirect3DStateBlock9* d3d9_state_block = nullptr;
+		device->CreateStateBlock(D3DSBT_PIXELSTATE, &d3d9_state_block);
 
 		d3d9_state_block->Capture();
 
@@ -422,31 +394,13 @@ namespace hooks::vmt
 
 		g_menu.draw();
 
-		if (g_cfg.legit.enable)
-		{
-			if (g_cfg.rage.enable)
-				g_cfg.rage.enable = false;
-		}
-
-		if (g_cfg.rage.enable)
-		{
-			if (g_cfg.legit.enable)
-				g_cfg.legit.enable = false;
-		}
+		if (g_cfg.legit.enable && g_cfg.rage.enable)
+			g_cfg.rage.enable = false;
 
 		RENDER->end();
 
 		d3d9_state_block->Apply();
 		d3d9_state_block->Release();
-
-		device->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, multisample);
-		device->SetRenderState(D3DRS_ANTIALIASEDLINEENABLE, antialias);
-		device->SetRenderState(D3DRS_COLORWRITEENABLE, colorwrite);
-		device->SetRenderState(D3DRS_SRGBWRITEENABLE, srgbwrite);
-		device->SetRenderState(D3DRS_COLORWRITEENABLE, dwOld_D3DRS_COLORWRITEENABLE);
-		device->SetRenderState(D3DRS_SRGBWRITEENABLE, true);
-		device->SetVertexDeclaration(vert_dec);
-		device->SetVertexShader(vert_shader);
 
 		return original(device);
 	}

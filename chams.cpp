@@ -407,8 +407,6 @@ bool c_chams::should_draw()
 		float additional_amt = g_cfg.misc.attachments_amt * 0.01f;
 
 		auto alpha = 1.f * additional_amt;
-		if (HACKS->local->is_scoped() || HACKS->weapon && HACKS->weapon->is_grenade())
-			alpha *= MODEL_BLEND_FACTOR;
 
 		HACKS->render_view->set_blend(alpha);
 		return this->draw_model(g_cfg.visuals.chams[c_attachments], nullptr, alpha);
