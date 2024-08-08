@@ -89,13 +89,8 @@ namespace cmd_shift
 
 			c_engine_prediction_restore restore{};
 
-#ifdef LEGACY
-			* (c_user_cmd**)((std::uintptr_t)HACKS->local + XORN(0x3314)) = current_cmd;
-			*(c_user_cmd*)((std::uintptr_t)HACKS->local + XORN(0x326C)) = *current_cmd;
-#else
 			* (c_user_cmd**)((std::uintptr_t)HACKS->local + XORN(0x3348)) = current_cmd;
 			*(c_user_cmd*)((std::uintptr_t)HACKS->local + XORN(0x3298)) = *current_cmd;
-#endif
 
 			* ENGINE_PREDICTION->prediction_random_seed = MD5_PseudoRandom(current_cmd->command_number) & 0x7FFFFFFF;
 			*ENGINE_PREDICTION->prediction_player = (int)HACKS->local;
@@ -105,21 +100,6 @@ namespace cmd_shift
 
 			HACKS->prediction->in_prediction = true;
 			HACKS->prediction->is_first_time_predicted = false;
-
-			current_cmd->buttons.force(HACKS->local->button_forced());
-
-#ifndef LEGACY
-			current_cmd->buttons.remove(HACKS->local->button_disabled());
-#endif
-
-			const int buttons = current_cmd->buttons.bits;
-			const int local_buttons = *HACKS->local->buttons();
-			const int buttons_changed = buttons ^ local_buttons;
-
-			HACKS->local->button_last() = local_buttons;
-			*HACKS->local->buttons() = buttons;
-			HACKS->local->button_pressed() = buttons_changed & buttons;
-			HACKS->local->button_released() = buttons_changed & (~buttons);
 
 			HACKS->local->run_post_think();
 
@@ -147,13 +127,8 @@ namespace cmd_shift
 				auto old_cmd = HACKS->cmd;
 				HACKS->cmd = cmd;
 
-#ifdef LEGACY
-				* (c_user_cmd**)((std::uintptr_t)HACKS->local + XORN(0x3314)) = cmd;
-				*(c_user_cmd*)((std::uintptr_t)HACKS->local + XORN(0x326C)) = *cmd;
-#else
 				* (c_user_cmd**)((std::uintptr_t)HACKS->local + XORN(0x3348)) = cmd;
 				*(c_user_cmd*)((std::uintptr_t)HACKS->local + XORN(0x3298)) = *cmd;
-#endif
 
 				*ENGINE_PREDICTION->prediction_random_seed = MD5_PseudoRandom(HACKS->cmd->command_number) & 0x7FFFFFFF;
 				*ENGINE_PREDICTION->prediction_player = (int)HACKS->local;
@@ -166,8 +141,6 @@ namespace cmd_shift
 
 				MOVEMENT->run();
 				ANTI_AIM->run_movement();
-
-				//	RAGEBOT->run_stop();
 
 				HACKS->predicted_time = TICKS_TO_TIME(HACKS->tickbase);
 

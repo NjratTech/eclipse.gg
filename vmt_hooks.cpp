@@ -540,8 +540,6 @@ namespace hooks::vmt
 				if (EXPLOITS->cl_move.trigger && EXPLOITS->cl_move.shifting)
 				{
 					*HACKS->send_packet = HACKS->client_state->choked_commands >= EXPLOITS->limits.double_tap;
-
-				//	HACKS->cmd->buttons.remove(IN_ATTACK | IN_ATTACK2);
 				}
 
 				HACKS->tickbase = [&]()
@@ -601,6 +599,7 @@ namespace hooks::vmt
 					FAKE_LAG->update_shot_cmd();
 				}
 				ENGINE_PREDICTION->end();
+				EXPLOITS->correct_charge(cmd);
 				ANTI_AIM->cleanup();
 				MOVEMENT->rotate_movement(HACKS->cmd, MOVEMENT->get_base_angle());
 				ANIMFIX->update_local();
