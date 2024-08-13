@@ -349,6 +349,7 @@ void c_grenade_prediction::render_offscreen_esp(nade_path_t* info, const float& 
 		FONT_CENTERED_X | FONT_CENTERED_Y | FONT_OUTLINE | FONT_LIGHT_BACK, &RENDER->fonts.weapon_icons_large, info->preview_icon);
 }
 
+// TODO: redesign
 void c_grenade_prediction::draw_world_path()
 {
 	if (!HACKS->in_game)

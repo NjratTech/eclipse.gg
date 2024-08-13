@@ -42,14 +42,8 @@ struct unpred_vars_t
 
 		ground_entity = HACKS->local->ground_entity();
 
-		// hardcoded because it doesn't parse with netvars
-#ifdef LEGACY
-		predicted_cmd = *(c_user_cmd**)((std::uintptr_t)HACKS->local + XORN(0x3314));
-		updated_cmd = *(c_user_cmd*)((std::uintptr_t)HACKS->local + XORN(0x326C));
-#else
 		predicted_cmd = *(c_user_cmd**)((std::uintptr_t)HACKS->local + XORN(0x3348));
 		updated_cmd = *(c_user_cmd*)((std::uintptr_t)HACKS->local + XORN(0x3298));
-#endif
 	}
 
 	INLINE void restore()
@@ -66,16 +60,11 @@ struct unpred_vars_t
 		HACKS->global_vars->curtime = curtime;
 		HACKS->global_vars->frametime = frametime;
 
-#ifdef LEGACY
-		* (c_user_cmd**)((std::uintptr_t)HACKS->local + XORN(0x3314)) = predicted_cmd;
-		*(c_user_cmd*)((std::uintptr_t)HACKS->local + XORN(0x326C)) = updated_cmd;
-#else
 		* (c_user_cmd**)((std::uintptr_t)HACKS->local + XORN(0x3348)) = predicted_cmd;
 		*(c_user_cmd*)((std::uintptr_t)HACKS->local + XORN(0x3298)) = updated_cmd;
-#endif
 	}
 
-	INLINE void reset() 
+	INLINE void reset()
 	{
 		in_prediction = false;
 		first_time_predicted = false;
@@ -100,7 +89,7 @@ struct unpred_vars_t
 	}
 };
 
-struct viewmodel_info_t 
+struct viewmodel_info_t
 {
 	bool looking_at_weapon{};
 
@@ -119,7 +108,7 @@ struct viewmodel_info_t
 	c_base_entity* active_weapon{};
 
 	// don't ask why..
-	INLINE void store(c_user_cmd* cmd, c_cs_player* viewmodel) 
+	INLINE void store(c_user_cmd* cmd, c_cs_player* viewmodel)
 	{
 		cmd_tick = cmd->command_number;
 
@@ -142,7 +131,7 @@ struct viewmodel_info_t
 		old_cycle = viewmodel->old_cycle();
 	}
 
-	INLINE void reset() 
+	INLINE void reset()
 	{
 		looking_at_weapon = false;
 
@@ -327,7 +316,7 @@ private:
 	networked_vars_t networked_vars[150]{};
 	networked_vars_t restore_vars[150]{};
 	viewmodel_info_t viewmodel_info[150]{};
-	
+
 	std::string last_sound_name{};
 public:
 	bool in_prediction{};
@@ -385,7 +374,8 @@ public:
 
 	void update();
 	void start();
-	void fix_viewmodel(bool store);
+	void update_viewmodel_info(c_user_cmd* cmd);
+	void fix_viewmodel(int stage);
 	void repredict();
 	void end();
 };

@@ -18,7 +18,6 @@ constexpr auto misc_ui_flags = ImGuiWindowFlags_NoSavedSettings
 | ImGuiWindowFlags_NoScrollbar
 | ImGuiWindowFlags_NoFocusOnAppearing;
 
-// TODO: rework this code
 std::string get_bind_type(int type)
 {
 	switch (type)
@@ -43,7 +42,6 @@ void c_menu::draw_binds()
 
 	static auto opened = true;
 	static float alpha = 0.f;
-
 	static auto window_size = ImVec2(184, 40.f);
 
 	for (int i = 0; i < binds_max; ++i)
@@ -62,12 +60,12 @@ void c_menu::draw_binds()
 				binds.type = current_bind.type;
 				binds.time = HACKS->system_time();
 
-				window_size.y += 25.f;
+				window_size.y += 12.f;
 			}
 			else
 			{
 				binds.reset(HACKS->system_time());
-				window_size.y -= 25.f;
+				window_size.y -= 12.f;
 			}
 
 			prev_bind = current_bind;
@@ -97,41 +95,30 @@ void c_menu::draw_binds()
 		set_position = false;
 	}
 
-	ImGui::SetNextWindowSize(window_size + ImVec2(0.f, 2.f));
-
+	ImGui::SetNextWindowSize(window_size);
 	ImGui::PushFont(RENDER->fonts.main.get());
 	ImGui::SetNextWindowBgAlpha(0.f);
-	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.f, 0.f, 0.f, 0.f));
 	ImGui::Begin(CXOR("##bind_window"), &opened, misc_ui_flags);
 
 	auto list = ImGui::GetWindowDrawList();
 	list->Flags |= ImDrawListFlags_AntiAliasedFill | ImDrawListFlags_AntiAliasedLines;
 
-	// window body
-	{
-		auto keybinds_size = ImVec2(176.f, 32.f);
-		auto window_pos = ImGui::GetWindowPos() + ImVec2(4.f, 1.f);
-		auto window_alpha = 255.f * alpha;
+	auto window_pos = ImGui::GetWindowPos();
 
-		// header
-		imgui_blur::create_blur(list, window_pos, window_pos + ImVec2(keybinds_size.x, 32.f), c_color(100, 100, 100, window_alpha).as_imcolor(), 4.f, ImDrawCornerFlags_Top);
+	//imgui_blur::create_blur(list, window_pos, window_pos + window_size, ImColor(200, 200, 200, (int)(130 * alpha)), 4.f, ImDrawCornerFlags_Bot);
 
-		auto text_size = ImGui::CalcTextSize(CXOR("Hotkeys"));
-		list->AddText(ImVec2(window_pos.x + (keybinds_size.x - text_size.x) / 2, window_pos.y + 8), c_color(255, 255, 255, window_alpha).as_imcolor(), CXOR("Hotkeys"));
+	ImVec2 line_start = ImVec2(window_pos.x + 15.f, window_pos.y);
+	ImVec2 line_end = ImVec2(window_pos.x - 14.f, window_pos.y) + ImVec2(window_size.x, 0);
+	list->AddLine(line_start, line_end, c_color(g_cfg.misc.ui_color.base().r(), g_cfg.misc.ui_color.base().g(), g_cfg.misc.ui_color.base().b(), g_cfg.misc.ui_color.base().a() * alpha).as_imcolor(), 3.0f);
 
-		list->AddLine(window_pos + ImVec2(0, 31.f), window_pos + ImVec2(keybinds_size.x, 31), c_color(255, 255, 255, 12.75f * alpha).as_imcolor());
+	ImGui::SetCursorPos(ImVec2((window_size.x - ImGui::CalcTextSize("Hotkeys").x) / 2, 4));
+	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, alpha));
+	ImGui::Text("Hotkeys");
+	ImGui::PopStyleColor();
 
-		// body
-		imgui_blur::create_blur(list, window_pos + ImVec2(0, 32.f), window_pos + ImVec2(keybinds_size.x, 32.f + window_size.y), c_color(100, 100, 100, (int)(window_alpha)).as_imcolor(), 4.f, ImDrawCornerFlags_Bot);
-
-		// border
-		list->AddRect(window_pos, ImVec2(window_pos.x + keybinds_size.x, window_pos.y + window_size.y), c_color(100, 100, 100, 100.f * alpha).as_imcolor(), 4.f);
-	}
-
-	// bind text
 	auto prev_pos = ImGui::GetCursorPos();
+	float y_offset = 25.f;
 
-	auto max_pos = 0.f;
 	for (auto& keybind : updated_keybinds)
 	{
 		float time_difference = HACKS->system_time() - keybind.second.time;
@@ -143,7 +130,7 @@ void c_menu::draw_binds()
 		if (animation <= 0.f)
 			continue;
 
-		ImGui::SetCursorPos(ImVec2(16.f, 40.f + max_pos));
+		ImGui::SetCursorPos(ImVec2(16.f, y_offset));
 
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, alpha * animation));
 		ImGui::Text(keybind.second.name.c_str());
@@ -159,7 +146,7 @@ void c_menu::draw_binds()
 		ImGui::PopStyleColor();
 
 		this->create_animation(keybind.second.alpha, keybind.second.type != -1, 0.6f, lerp_animation);
-		max_pos += 25.f * keybind.second.alpha;
+		y_offset += 14.f * keybind.second.alpha;
 	}
 
 	ImGui::SetCursorPos(prev_pos);
@@ -170,7 +157,6 @@ void c_menu::draw_binds()
 	list->Flags &= ~(ImDrawListFlags_AntiAliasedFill | ImDrawListFlags_AntiAliasedLines);
 
 	ImGui::End(false);
-	ImGui::PopStyleColor();
 	ImGui::PopFont();
 }
 
@@ -182,7 +168,6 @@ void c_menu::draw_spectators()
 
 	static auto opened = true;
 	static float alpha = 0.f;
-
 	static auto window_size = ImVec2(184, 40.f);
 
 	auto sanitize = [&](const char* name)
@@ -227,7 +212,7 @@ void c_menu::draw_spectators()
 		if (animation.name != spectator.name)
 		{
 			if (animation.was_spectating && window_size.y > 40.f)
-				window_size.y -= 25.f;
+				window_size.y -= 12.f;
 
 			animation.reset();
 			continue;
@@ -237,7 +222,7 @@ void c_menu::draw_spectators()
 		{
 			if (!animation.was_spectating)
 			{
-				window_size.y += 25.f;
+				window_size.y += 12.f;
 
 				animation.start_time = HACKS->system_time();
 				animation.was_spectating = true;
@@ -247,7 +232,7 @@ void c_menu::draw_spectators()
 		{
 			if (animation.was_spectating)
 			{
-				window_size.y -= 25.f;
+				window_size.y -= 12.f;
 
 				animation.start_time = HACKS->system_time();
 				animation.was_spectating = false;
@@ -278,54 +263,30 @@ void c_menu::draw_spectators()
 		set_position = false;
 	}
 
-	ImGui::SetNextWindowSize(window_size + ImVec2(0.f, 2.f));
-
+	ImGui::SetNextWindowSize(window_size);
 	ImGui::PushFont(RENDER->fonts.main.get());
 	ImGui::SetNextWindowBgAlpha(0.f);
-	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.f, 0.f, 0.f, 0.f));
 	ImGui::Begin(CXOR("##spec_window"), &opened, misc_ui_flags);
 
 	auto list = ImGui::GetWindowDrawList();
 	list->Flags |= ImDrawListFlags_AntiAliasedFill | ImDrawListFlags_AntiAliasedLines;
 
-	// window body
-	{
-		auto keybinds_size = ImVec2(176.f, 32.f);
-		auto window_pos = ImGui::GetWindowPos() + ImVec2(4.f, 1.f);
-		auto window_alpha = 255.f * alpha;
+	auto window_pos = ImGui::GetWindowPos();
 
-		// header
-		imgui_blur::create_blur(list, window_pos, window_pos + ImVec2(keybinds_size.x, 32.f), c_color(100, 100, 100, window_alpha).as_imcolor(), 4.f, ImDrawCornerFlags_Top);
+	//imgui_blur::create_blur(list, window_pos, window_pos + window_size, ImColor(200, 200, 200, (int)(130 * alpha)), 4.f, ImDrawCornerFlags_Bot);
 
-		auto text_size = ImGui::CalcTextSize(CXOR("Spectators"));
-		float text_x = window_pos.x + (keybinds_size.x - text_size.x) / 2;
-		list->AddText(
-			ImVec2(text_x, window_pos.y + 8),
-			c_color(255, 255, 255, window_alpha).as_imcolor(),
-			CXOR("Spectators"));
+	ImVec2 line_start = ImVec2(window_pos.x + 15.f, window_pos.y);
+	ImVec2 line_end = ImVec2(window_pos.x - 14.f, window_pos.y) + ImVec2(window_size.x, 0);
+	list->AddLine(line_start, line_end, c_color(g_cfg.misc.ui_color.base().r(), g_cfg.misc.ui_color.base().g(), g_cfg.misc.ui_color.base().b(), g_cfg.misc.ui_color.base().a() * alpha).as_imcolor(), 3.0f);
 
-		list->AddLine(
-			window_pos + ImVec2(0, 31.f),
-			window_pos + ImVec2(keybinds_size.x, 31),
-			c_color(255, 255, 255, 12.75f * alpha).as_imcolor());
+	ImGui::SetCursorPos(ImVec2((window_size.x - ImGui::CalcTextSize("Spectators").x) / 2, 4));
+	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, alpha));
+	ImGui::Text("Spectators");
+	ImGui::PopStyleColor();
 
-		// body
-		imgui_blur::create_blur(list,
-			window_pos + ImVec2(0, 32.f),
-			window_pos + ImVec2(keybinds_size.x, 32.f + window_size.y),
-			c_color(100, 100, 100, (int)(window_alpha)).as_imcolor(), 4.f, ImDrawCornerFlags_Bot);
-
-		// border
-		list->AddRect(window_pos,
-			ImVec2(window_pos.x + keybinds_size.x, window_pos.y + window_size.y),
-			c_color(100, 100, 100, 100.f * alpha).as_imcolor(),
-			4.f);
-	}
-
-	// bind text
 	auto prev_pos = ImGui::GetCursorPos();
+	float y_offset = 25.f;
 
-	auto max_pos = 0.f;
 	for (int i = 0; i < 50; ++i)
 	{
 		auto& spectator = spectators[i];
@@ -340,23 +301,23 @@ void c_menu::draw_spectators()
 		if (anim_progress <= 0.f)
 			continue;
 
-		ImGui::SetCursorPos(ImVec2(16.f, 40.f + max_pos));
+		ImGui::SetCursorPos(ImVec2(16.f, y_offset));
 
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, alpha * anim_progress));
 		ImGui::Text(spectator.name.c_str());
 		ImGui::PopStyleColor();
 
 		auto chase_type = spectator.chase_mode;
-		auto text_size = ImGui::CalcTextSize(chase_type.c_str()).x;
+		auto textsize = ImGui::CalcTextSize(chase_type.c_str()).x;
 
-		ImGui::SameLine(ImGui::GetWindowSize().x - text_size - 15.f);
+		ImGui::SameLine(ImGui::GetWindowSize().x - textsize - 15.f);
 
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 0.4f * alpha * anim_progress));
 		ImGui::Text(chase_type.c_str());
 		ImGui::PopStyleColor();
 
 		this->create_animation(animation.anim_step, spectator.spectated && animation.was_spectating, 0.6f, lerp_animation);
-		max_pos += 25.f * animation.anim_step;
+		y_offset += 14.f * animation.anim_step;
 	}
 
 	ImGui::SetCursorPos(prev_pos);
@@ -367,7 +328,6 @@ void c_menu::draw_spectators()
 	list->Flags &= ~(ImDrawListFlags_AntiAliasedFill | ImDrawListFlags_AntiAliasedLines);
 
 	ImGui::End(false);
-	ImGui::PopStyleColor();
 	ImGui::PopFont();
 }
 
@@ -534,12 +494,12 @@ void c_menu::draw_bomb_indicator()
 		auto window_alpha = 255.f * alpha;
 
 		// header
-		imgui_blur::create_blur(list, window_pos, ImVec2(window_pos.x + bomb_size.x, window_pos.y + bomb_size.y), c_color(100, 100, 100, window_alpha).as_imcolor(), 8.f);
+		imgui_blur::create_blur(list, window_pos, ImVec2(window_pos.x + bomb_size.x, window_pos.y + bomb_size.y), c_color(255, 255, 255, window_alpha).as_imcolor(), 8.f);
 
 		list->AddImage((void*)bomb_texture, ImVec2(window_pos.x + 19, window_pos.y + 16), ImVec2(window_pos.x + 51, window_pos.y + 47), ImVec2(0, 0), ImVec2(1, 1), c_color(255, 255, 255, window_alpha).as_imcolor());
 
 		// border
-		list->AddRect(window_pos, ImVec2(window_pos.x + bomb_size.x, window_pos.y + bomb_size.y), c_color(100, 100, 100, 100.f * alpha).as_imcolor(), 8.f);
+		list->AddRect(window_pos, ImVec2(window_pos.x + bomb_size.x, window_pos.y + bomb_size.y), c_color(255, 255, 255, 100.f * alpha).as_imcolor(), 8.f);
 
 		ImGui::PushFont(RENDER->fonts.bold_large.get());
 		list->AddText(window_pos + ImVec2(27.f, 7.f), c_color(255, 255, 255, 255 * alpha).as_imcolor(), bomb.bomb_site.c_str());
@@ -605,40 +565,24 @@ void c_menu::draw_watermark()
 	if (!HACKS->cheat_init2 || !(g_cfg.misc.menu_indicators & 4))
 		return;
 
-#ifndef _DEBUG
-	/*if (!avatar || HACKS->cheat_info.user_name.empty() || HACKS->cheat_info.user_avatar.empty() || HACKS->cheat_info.user_token.empty())
-		return;*/
-#endif
-
-	auto image_size = ImVec2{ 16, 16 };
-
 	char cur_time[128]{};
-
-	time_t t;
-	struct tm* ptm;
-
-	t = time(NULL);
-	ptm = localtime(&t);
-
+	time_t t = time(NULL);
+	struct tm* ptm = localtime(&t);
 	strftime(cur_time, 128, CXOR("%H:%M"), ptm);
 
 	auto calculated_ping = HACKS->real_ping == -1.f ? 0 : (int)(HACKS->real_ping * 1000.f);
 	auto ping = tfm::format(CXOR("%dms"), calculated_ping);
 
-	std::string current_username{};
+	std::string current_username = HACKS->cheat_info.user_name;
+	auto watermark_string = tfm::format(CXOR("%s | %s | %s | %s"), this->prefix, current_username, cur_time, ping);
 
-	ImVec2 text_size{};
 	ImGui::PushFont(RENDER->fonts.main.get());
-	{
-		current_username = HACKS->cheat_info.user_name;
-		auto watermark_string = tfm::format(CXOR("%s %s"), this->prefix, tfm::format(CXOR("%s | %s  %s"), current_username, cur_time, ping));
-
-		text_size = ImGui::CalcTextSize(watermark_string.c_str());
-	}
+	ImVec2 text_size = ImGui::CalcTextSize(watermark_string.c_str());
 	ImGui::PopFont();
 
-	auto window_size = ImVec2(75.f + text_size.x + image_size.x, 32.f);
+	static auto window_size = ImVec2(text_size.x + 20.f, 30.f);
 	static auto opened = true;
+	static float alpha = 1.f;
 
 	static bool set_position = false;
 	if (HACKS->loading_config)
@@ -648,18 +592,7 @@ void c_menu::draw_watermark()
 	{
 		g_cfg.misc.watermark_position.x = RENDER->screen.x - window_size.x - 10.f;
 		g_cfg.misc.watermark_position.y = 10;
-
 		set_position = true;
-	}
-
-	auto current_pos = g_cfg.misc.watermark_position.x + window_size.x;
-	if (current_pos > (RENDER->screen.x - 10.f))
-	{
-		if (!set_position)
-		{
-			g_cfg.misc.watermark_position.x -= 5.f;
-			set_position = true;
-		}
 	}
 
 	if (set_position)
@@ -671,58 +604,31 @@ void c_menu::draw_watermark()
 	ImGui::SetNextWindowSize(window_size);
 	ImGui::PushFont(RENDER->fonts.main.get());
 	ImGui::SetNextWindowBgAlpha(0.f);
-	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.f, 0.f, 0.f, 0.f));
 	ImGui::Begin(CXOR("##watermark_window"), &opened, misc_ui_flags);
-	{
-		auto list = ImGui::GetWindowDrawList();
-		list->Flags |= ImDrawListFlags_AntiAliasedFill | ImDrawListFlags_AntiAliasedLines;
 
-		auto prefix_size = ImGui::CalcTextSize(this->prefix.c_str()) + image_size;
+	auto list = ImGui::GetWindowDrawList();
+	list->Flags |= ImDrawListFlags_AntiAliasedFill | ImDrawListFlags_AntiAliasedLines;
 
-		auto base_window_pos = ImGui::GetWindowPos() + ImVec2(4.f, 1.f);
+	auto window_pos = ImGui::GetWindowPos();
 
-		// left side
-		{
-			imgui_blur::create_blur(list, base_window_pos, base_window_pos + ImVec2{ prefix_size.x + 30.f, window_size.y - 3.f},
-				ImColor(100, 100, 100, 255), 3.f, ImDrawCornerFlags_Left);
+	//imgui_blur::create_blur(list, window_pos, window_pos + window_size, ImColor(200, 200, 200, (int)(130 * alpha)), 4.f, ImDrawCornerFlags_All);
 
-			auto base_offset = ImVec2{ base_window_pos.x + 10.f, base_window_pos.y + 7.f };
+	ImVec2 line_start = window_pos;
+	ImVec2 line_end = line_start + ImVec2(window_size.x, 0);
+	list->AddLine(line_start, line_end, g_cfg.misc.ui_color.base().as_imcolor(), 3.0f);
 
-			auto clr = g_cfg.misc.ui_color.base();
-			list->AddImage((void*)logo_texture, base_offset, base_offset + image_size, ImVec2(0, 0), ImVec2(1, 1), clr.as_imcolor());
+	ImGui::SetCursorPos(ImVec2(10.f, 7.f));
+	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, alpha));
+	ImGui::Text(watermark_string.c_str());
+	ImGui::PopStyleColor();
 
-			auto watermark_offset = base_offset + ImVec2{ image_size.x + 6.f, -0.5f };
-			list->AddText(watermark_offset, ImColor(255, 255, 255, 255), this->prefix.c_str());
-		}
+	if (!set_position)
+		g_cfg.misc.watermark_position = ImGui::GetWindowPos();
 
-		// right side
-		{
-			auto left_side_watermark_end = prefix_size.x + 30.f;
-			auto left_side_end = base_window_pos + ImVec2{ left_side_watermark_end, 0.f };
-			imgui_blur::create_blur(list, left_side_end, left_side_end + ImVec2{ window_size.x - left_side_watermark_end - 10.f, window_size.y - 3.f },
-				ImColor(100, 100, 100, 255), 3.f, ImDrawCornerFlags_Right);
+	list->Flags &= ~(ImDrawListFlags_AntiAliasedFill | ImDrawListFlags_AntiAliasedLines);
 
-			auto avatar_base = ImVec2{ left_side_end.x + 7.f, left_side_end.y + 6.f };
-
-			if (avatar && !HACKS->cheat_info.user_avatar.empty() && HACKS->cheat_info.user_avatar.size())
-				list->AddImageRounded((void*)avatar, avatar_base, avatar_base + image_size, ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255), 20.f);
-			else
-				list->AddRectFilled(avatar_base, avatar_base + image_size, ImColor(255, 255, 255), 20.f);
-
-			auto avatar_end = ImVec2{ avatar_base.x + image_size.x + 6.f, left_side_end.y + 6.5f };
-
-			auto current_text = tfm::format(CXOR("%s | %s %s"), current_username, cur_time, ping);
-			list->AddText(avatar_end, ImColor(255, 255, 255, 255), current_text.c_str());
-		}
-
-		// border
-		list->AddRect(base_window_pos, ImVec2(base_window_pos.x + window_size.x - 10.f, base_window_pos.y + window_size.y - 3.f), c_color(120, 120, 120, 100.f).as_imcolor(), 3.f);
-
-		list->Flags &= ~(ImDrawListFlags_AntiAliasedFill | ImDrawListFlags_AntiAliasedLines);
-	}
 	ImGui::End(false);
 	ImGui::PopFont();
-	ImGui::PopStyleColor();
 }
 
 void c_menu::on_game_events(c_game_event* event)

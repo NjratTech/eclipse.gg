@@ -605,7 +605,7 @@ void c_esp::draw_player_esp()
 			int iter = 0;
 			
 			if (entity_visuals.elements & 2)
-				EMPLACE_OBJECT(true, FONT_OUTLINE | FONT_LIGHT_BACK, FONT_PIXEL, ESP_POS_UP, 0.f, 0.f, esp.alpha, name_color, { 0, 0, 0, 255 }, player->get_name());
+				EMPLACE_OBJECT(true, FONT_OUTLINE | FONT_LIGHT_BACK, FONT_DEFAULT, ESP_POS_UP, 0.f, 0.f, esp.alpha, name_color, { 0, 0, 0, 255 }, player->get_name());
 
 			if (entity_visuals.elements & 4)
 			{
@@ -627,32 +627,6 @@ void c_esp::draw_player_esp()
 			{
 				if (esp.alpha > 0.5f && esp.health > 0)
 				{
-					/*if (entity_visuals.elements & 512)
-					{
-						auto studio_hdr = HACKS->model_info->get_studio_model(player->get_model());
-						if (studio_hdr)
-						{
-							auto bone_cache = player->bone_cache().base();
-							for (int j = 0; j < studio_hdr->bones; j++)
-							{
-								auto bone = studio_hdr->bone(j);
-								if (!bone)
-									continue;
-
-								auto name = bone->get_name();
-								if (bone->flags > 0 && (bone->flags & 0x100) && bone->parent != -1)
-								{
-									vec2_t parent{}, child{};
-									if (RENDER->world_to_screen(bone_cache[j].get_origin(), child, true)
-										&& RENDER->world_to_screen(bone_cache[bone->parent].get_origin(), parent, true))
-									{
-										RENDER->line(parent.x, parent.y, child.x, child.y, skeleton_color.new_alpha((int)(skeleton_color.a() * esp.alpha)));
-									}
-								}
-							}
-						}
-					}*/
-
 					if (entity_visuals.elements & 64)
 					{
 						if (player->armor_value() > 0)

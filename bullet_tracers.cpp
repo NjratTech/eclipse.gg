@@ -322,6 +322,7 @@ void c_bullet_tracers::render_tracers()
 	}
 }
 
+// TODO: fix
 void c_bullet_tracers::render_hitmarkers()
 {
 	if (!HACKS->local || !HACKS->in_game)

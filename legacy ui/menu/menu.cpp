@@ -188,39 +188,62 @@ void c_menu::window_end()
 void c_menu::draw_ui_background()
 {
 	auto list = this->get_draw_list();
+
 	auto alpha = this->get_alpha();
-	auto window_alpha = 255.f * alpha;
+	auto window_alpha = 255.f * this->get_alpha();
+
 	auto window_pos = this->get_window_pos();
 
-	// Background
-	list->AddRectFilled(window_pos, ImVec2(window_pos.x + 720, window_pos.y + 520), ImColor(20, 20, 20, (int)(window_alpha)), 4.f);
+	auto header_size = ImVec2(720, 47);
+	// header
+	imgui_blur::create_blur(list, window_pos, ImVec2(window_pos.x + header_size.x, window_pos.y + header_size.y), ImColor(255, 255, 255, (int)window_alpha), 6.f, ImDrawCornerFlags_Top);
 
-	// Header
-	list->AddRectFilled(window_pos, ImVec2(window_pos.x + 720, window_pos.y + 40), ImColor(30, 30, 30, (int)(window_alpha)), 4.f);
+	// image
+	auto image_size = ImVec2(14, 14);
+	auto image_pos_min = ImVec2((header_size.x / 2) - (image_size.x - 2), (header_size.y / 2) - (image_size.y - 2));
+	auto image_pos_max = ImVec2((header_size.x / 2) + (image_size.x - 2), (header_size.y / 2) + (image_size.y - 2));
 
-	// Title
+	auto clr = g_cfg.misc.ui_color.base();
+
 	ImGui::PushFont(RENDER->fonts.dmg.get());
-	auto text_size = ImGui::CalcTextSize("eclipse");
-	list->AddText(ImVec2(window_pos.x + 20, window_pos.y + 10), ImColor(255, 255, 255, (int)(window_alpha)), "eclipse");
+	auto text_size = ImGui::CalcTextSize(this->prefix.c_str());
+
+	list->AddImage(
+		(void*)logo_texture, window_pos + image_pos_min - ImVec2(text_size.x - 18, 0.f), window_pos + image_pos_max - ImVec2(text_size.x - 18, 0.f), ImVec2(0, 0), ImVec2(1, 1), clr.new_alpha(window_alpha).as_imcolor());
+
+	auto base_x = window_pos.x + image_pos_min.x - text_size.x + 18.f;
+	list->AddText(ImVec2(base_x + 30.f, window_pos.y + 15), ImColor(255, 255, 255, (int)(150.f * alpha)), this->prefix.c_str());
 	ImGui::PopFont();
 
-	// Separator
-	list->AddLine(ImVec2(window_pos.x, window_pos.y + 40), ImVec2(window_pos.x + 720, window_pos.y + 40), ImColor(50, 50, 50, (int)(window_alpha)));
+	// body
+	imgui_blur::create_blur(list, window_pos + ImVec2(160, 47), ImVec2(window_pos.x + 720, window_pos.y + 520), ImColor(80, 80, 80, (int)(window_alpha)), 6.f, ImDrawCornerFlags_BotRight);
+
+	// body tabs
+	imgui_blur::create_blur(list, window_pos + ImVec2(0, 47), ImVec2(window_pos.x + 160, window_pos.y + 520), ImColor(80, 80, 80, (int)(window_alpha)), 6.f, ImDrawCornerFlags_BotLeft);
+
+	// header end (separator)
+	list->AddLine(window_pos + ImVec2(0, 46), window_pos + ImVec2(720, 46), ImColor(255, 255, 255, (int)(12.75f * alpha)));
+
+	// tab separator
+	list->AddLine(window_pos + ImVec2(160, 47), window_pos + ImVec2(160, 520), ImColor(255, 255, 255, (int)(12.75f * alpha)), 1.f);
+
+	// border
+	list->AddRect(window_pos, ImVec2(window_pos.x + 720, window_pos.y + 520), ImColor(100, 100, 100, (int)(100.f * alpha)), 6.f);
 }
 
 void c_menu::draw_tabs()
 {
+	static std::array<tab_animation_t, max_tabs> tab_info{};
+
 	auto list = this->get_draw_list();
-
 	auto prev_pos = ImGui::GetCursorPos();
-
-	auto window_alpha = 255.f * this->get_alpha();
+	auto window_alpha = this->get_alpha();
 	auto child_pos = this->get_window_pos() + ImVec2(0, 49);
 
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0));
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));
-	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, this->get_alpha()));
+	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, window_alpha));
 
 	auto clr = g_cfg.misc.ui_color.base();
 
@@ -244,33 +267,50 @@ void c_menu::draw_tabs()
 		auto tab_pos_min = child_pos + tab_min;
 		auto tab_pos_max = child_pos + tab_max;
 
-		float rgb_val = tab_selector == i ? 255 : 150 + 105 * info.hovered_alpha;
-		c_color text_clr = c_color(rgb_val, rgb_val, rgb_val, rgb_val * this->get_alpha());
+		ImVec2 icon_bg_size(36, 32);
+		imgui_blur::create_blur(list, tab_pos_min, tab_pos_min + icon_bg_size,
+			ImColor(100, 100, 100, (int)(255 * window_alpha)), 4.f, ImDrawCornerFlags_Left);
 
-		// tab background
-		if (tab_selector == i)
-		{
-			list->AddRectFilled(tab_pos_min, tab_pos_max - ImVec2(2, 0), c_color(255, 255, 255, 10 * info.alpha * this->get_alpha()).as_imcolor(), 4.f, ImDrawCornerFlags_Left);
+		ImVec2 text_bg_pos = tab_pos_min + ImVec2(icon_bg_size.x, 0);
+		ImVec2 text_bg_size(tab_max.x - tab_min.x - icon_bg_size.x, 32);
+		imgui_blur::create_blur(list, text_bg_pos, text_bg_pos + text_bg_size,
+			ImColor(255, 255, 255, (int)(100 * window_alpha)), 4.f, ImDrawCornerFlags_Right);
 
-			// i can't draw rounded rect for 2 pixels
-			// so i decided to limit render range and draw rect for 4 pixels
-			list->PushClipRect(tab_pos_max - ImVec2(2, 32), tab_pos_max);
-			list->AddRectFilled(tab_pos_max - ImVec2(4, 32), tab_pos_max, clr.new_alpha(255 * info.alpha * this->get_alpha()).as_imcolor(), 2.f, ImDrawCornerFlags_Right);
-			list->PopClipRect();
-		}
+		list->AddRect(tab_pos_min, tab_pos_max, ImColor(255, 255, 255, (int)(10 * window_alpha)), 4.f);
+
+		int rgb_val = tab_selector == i ? 255 : 150 + 105 * info.hovered_alpha;
+		ImU32 text_clr = ImColor(rgb_val, rgb_val, rgb_val, (int)(rgb_val * window_alpha));
 
 		if (icon_textures[i])
-			list->AddImage((void*)icon_textures[i], tab_pos_min + ImVec2(10, 9), tab_pos_min + ImVec2(25, 24), ImVec2(0, 0), ImVec2(1, 1), text_clr.as_imcolor());
+		{
+			ImVec2 icon_size(16, 16);
+			ImVec2 icon_pos = tab_pos_min + ImVec2((icon_bg_size.x - icon_size.x) / 2, (icon_bg_size.y - icon_size.y) / 2);
+			list->AddImage((void*)icon_textures[i], icon_pos, icon_pos + icon_size, ImVec2(0, 0), ImVec2(1, 1), text_clr);
+		}
 
-		list->AddText(ImVec2(tab_pos_min.x + 32, tab_pos_min.y + 8), text_clr.as_imcolor(), tabs[i].c_str());
+		ImVec2 text_size = ImGui::CalcTextSize(tabs[i].c_str());
+		float text_padding = 10.0f;
+		ImVec2 text_pos = text_bg_pos + ImVec2(text_padding, (text_bg_size.y - text_size.y) / 2);
+		list->AddText(text_pos, text_clr, tabs[i].c_str());
+
+		if (tab_selector == i)
+		{
+			list->AddRectFilled(tab_pos_min, tab_pos_min + ImVec2(4.f, 32),
+				clr.new_alpha(255 * window_alpha * info.alpha).as_imcolor(), 4.f, ImDrawCornerFlags_Left);
+
+			list->AddRectFilled(tab_pos_min + ImVec2(4, 0), tab_pos_max,
+				ImColor(255, 255, 255, (int)(10 * window_alpha * info.alpha)), 4.f, ImDrawCornerFlags_Right);
+		}
 	}
 
-	ImGui::PopStyleColor();
+	ImGui::PopStyleColor(4);
 	ImGui::SetCursorPos(prev_pos);
 }
 
 void c_menu::draw_sub_tabs(int& selector, const std::vector< std::string >& tabs)
 {
+	static std::map< std::string, std::array< tab_animation_t, 6 > > tab_info{};
+
 	auto& style = ImGui::GetStyle();
 	auto alpha = this->get_alpha();
 	auto window_alpha = 255.f * alpha;
@@ -282,13 +322,13 @@ void c_menu::draw_sub_tabs(int& selector, const std::vector< std::string >& tabs
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));
 	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, this->get_alpha()));
 
-	draw_list->AddRectFilled(child_pos, child_pos + ImVec2(528, 58), c_color(217, 217, 217, 20 * alpha).as_imcolor(), 4.f);
+	draw_list->AddRectFilled(child_pos, child_pos + ImVec2(528, 58), ImColor(255, 255, 255, (int)(10 * alpha)), 4.f);
 
 	auto clr = g_cfg.misc.ui_color.base();
 
 	for (int i = 0; i < tabs.size(); ++i)
 	{
-		auto& info = subtab_info[tabs[0]][i];
+		auto& info = tab_info[tabs[0]][i];
 
 		const auto cursor_pos = ImVec2(27 + 80 * i, 14);
 		ImGui::SetCursorPos(cursor_pos);
@@ -312,7 +352,8 @@ void c_menu::draw_sub_tabs(int& selector, const std::vector< std::string >& tabs
 
 		if (selector == i)
 		{
-			draw_list->AddRectFilled(tab_bb.Min, tab_bb.Max, c_color(217, 217, 217, 20 * alpha * info.alpha).as_imcolor(), 4.f);
+			draw_list->AddRectFilled(tab_bb.Min, tab_bb.Max, ImColor(0, 0, 0, (int)(20 * alpha * info.alpha)), 4.f);
+			draw_list->AddRect(tab_bb.Min, tab_bb.Max, ImColor(255, 255, 255, (int)(20 * alpha)), 4.f);
 
 			// i can't draw rounded rect for 2 pixels
 			// so i decided to limit render range and draw rect for 4 pixels
@@ -321,12 +362,12 @@ void c_menu::draw_sub_tabs(int& selector, const std::vector< std::string >& tabs
 			draw_list->PopClipRect();
 		}
 
-		float rgb_val = selector == i ? 255 : 150 + 105 * info.hovered_alpha;
-		c_color text_clr = c_color(rgb_val, rgb_val, rgb_val, rgb_val * this->get_alpha());
+		float rgb_val = selector == i ? 255 : 180 + 75 * info.hovered_alpha;
+		ImColor text_clr = ImColor(rgb_val, rgb_val, rgb_val, rgb_val * this->get_alpha());
 
 		const ImVec2 label_size = ImGui::CalcTextSize(tabs[i].c_str(), NULL, true);
 
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(text_clr.r() / 255.f, text_clr.g() / 255.f, text_clr.b() / 255.f, text_clr.a() / 255.f));
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(text_clr));
 		ImGui::RenderTextClipped(tab_bb.Min, tab_bb.Max, tabs[i].c_str(), NULL, &label_size, style.ButtonTextAlign, &tab_bb);
 		ImGui::PopStyleColor();
 	}
@@ -346,7 +387,7 @@ std::vector< Snowflake::Snowflake > snow;
 
 void c_menu::draw_snow()
 {
-	
+
 }
 
 void c_menu::draw()

@@ -366,17 +366,16 @@ bool c_render::init()
 		cfg.RasterizerFlags = ImGuiFreeType::RasterizerFlags::MonoHinting | ImGuiFreeType::RasterizerFlags::Monochrome;
 		fonts.pixel.init(io, smallest_pixel_7, sizeof(smallest_pixel_7), 10.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
 		fonts.eventlog.init(io, CXOR("C:\\Windows\\Fonts\\lucon.ttf"), 10.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
+		fonts.main.init(io, CXOR("C:\\Windows\\Fonts\\verdana.ttf"), 13.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
+		fonts.dmg.init(io, CXOR("C:\\Windows\\Fonts\\verdana.ttf"), 18.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
 	}
 
-	//	cfg.RasterizerFlags = ImGuiFreeType::RasterizerFlags::ForceAutoHint;
-	fonts.main.init(io, SFUIDisplay_SemiBold, sizeof(SFUIDisplay_SemiBold), 14.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
 	fonts.large.init(io, SFUIDisplay_SemiBold, sizeof(SFUIDisplay_SemiBold), 30.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
 	fonts.esp.init(io, CXOR("C:\\Windows\\Fonts\\verdana.ttf"), 12.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
 	fonts.misc.init(io, SFUIDisplay_SemiBold, sizeof(SFUIDisplay_SemiBold), 14.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
 	fonts.bold.init(io, SFUIDisplay_Bold, sizeof(SFUIDisplay_Bold), 10.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
 	fonts.bold2.init(io, SFUIDisplay_Bold, sizeof(SFUIDisplay_Bold), 14.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
 	fonts.bold_large.init(io, SFUIDisplay_Bold, sizeof(SFUIDisplay_Bold), 26.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
-	fonts.dmg.init(io, SFUIDisplay_SemiBold, sizeof(SFUIDisplay_SemiBold), 18.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
 	fonts.weapon_icons.init_compressed(io, qo0icons_compressed_data, 38581, 13.f, &cfg, icon_ranges);
 	fonts.weapon_icons_large.init_compressed(io, qo0icons_compressed_data, 38581, 24.f, &cfg, icon_ranges);
 

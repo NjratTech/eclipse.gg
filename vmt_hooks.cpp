@@ -183,7 +183,7 @@ namespace hooks::vmt
 		// do animfix & store lagcomp records
 		if (stage == XORN(FRAME_NET_UPDATE_POSTDATAUPDATE_START))
 		{
-			ENGINE_PREDICTION->fix_viewmodel(false);
+		//	ENGINE_PREDICTION->fix_viewmodel(false);
 		}
 	}
 
@@ -850,39 +850,21 @@ namespace hooks::vmt
 	{
 		static auto original = hooker::get_original(&run_command);
 
-		if (!HACKS->local || !HACKS->local->is_alive())
-			HACKS->last_cmd = 0;
-
-		auto localplayer = HACKS->local;
-
-		if (!localplayer || localplayer != HACKS->local || !HACKS->local)
+		if (ecx != HACKS->prediction || !cmd || !HACKS->local || !player || player != HACKS->local || !player->is_alive())
 			return original(ecx, edx, player, cmd, move_helper);
 
-		if (cmd->tickcount == std::numeric_limits<int>::max()) {
+		if (cmd->tickcount == INT_MAX)
+		{
+			player->tickbase()++;
 			cmd->has_been_predicted = true;
-			localplayer->tickbase()++;
-
 			return;
 		}
 
-		const auto backup_tickbase = localplayer->tickbase();
-
-		auto vars = PREDFIX->get_compressed_netvars(HACKS->client_state->last_command_ack);
-
-		TICKBASE->fix(cmd->command_number, localplayer->tickbase());
-
-		auto curtime = HACKS->global_vars->curtime = TICKS_TO_TIME(localplayer->tickbase());
-		__asm movss xmm2, curtime
-
-		if (cmd->command_number > HACKS->last_cmd)
-			PREDFIX->store(cmd->command_number);
+		TICKBASE->fix(cmd->command_number, player->tickbase());
 
 		original(ecx, edx, player, cmd, move_helper);
-
-		if (cmd->command_number > HACKS->last_cmd)
-			PREDFIX->fix_netvars(HACKS->client_state->last_command_ack);
-
-		ENGINE_PREDICTION->fix_viewmodel(true);
+		ENGINE_PREDICTION->update_viewmodel_info(cmd);
+		PREDFIX->store(cmd->command_number);
 	}
 
 	void __fastcall emit_sound(void* thisptr, void* edx, void* filter, int ent_index, int channel, const char* sound_entry, unsigned int sound_entry_hash,

@@ -78,7 +78,6 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID reserved)
 	{
 #ifdef _DEBUG
 		HACKS->modules.dllmain = module;
-
 		CreateThread(0, 0, (LPTHREAD_START_ROUTINE)init_cheat, 0, 0, 0);
 #else
 #if ALPHA || BETA
