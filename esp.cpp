@@ -672,7 +672,6 @@ void c_esp::draw_player_esp()
 
 				esp_objects::render_bars(bbox, esp.objects[i], bar_offsets[position]);
 			}
-
 			// ghetto method: grab latest bar offset and apply it to next esp strings
 			for (int i = 0; i < MAX_ESP_OBJECTS; ++i)
 			{

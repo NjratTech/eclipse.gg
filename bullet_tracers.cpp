@@ -322,7 +322,6 @@ void c_bullet_tracers::render_tracers()
 	}
 }
 
-// TODO: fix
 void c_bullet_tracers::render_hitmarkers()
 {
 	if (!HACKS->local || !HACKS->in_game)
@@ -353,7 +352,6 @@ void c_bullet_tracers::render_hitmarkers()
 			if (hit.alpha <= 0.f)
 			{
 				screen_alpha = 0.f;
-
 				hitmarkers.erase(hitmarkers.begin() + i);
 				continue;
 			}
@@ -369,20 +367,22 @@ void c_bullet_tracers::render_hitmarkers()
 				if (g_cfg.misc.hitmarker & 1)
 				{
 					auto clr = g_cfg.misc.hitmarker_clr.base();
+					float size = 6.f * (1.f - diff);
 
-					RENDER->line(position.x - 2, position.y - 2, position.x - 8, position.y - 8, clr.new_alpha(255.f * hit.alpha), 1.f);
-					RENDER->line(position.x + 2, position.y + 2, position.x + 8, position.y + 8, clr.new_alpha(255.f * hit.alpha), 1.f);
-					RENDER->line(position.x - 2, position.y + 2, position.x - 8, position.y + 8, clr.new_alpha(255.f * hit.alpha), 1.f);
-					RENDER->line(position.x + 2, position.y - 2, position.x + 8, position.y - 8, clr.new_alpha(255.f * hit.alpha), 1.f);
+					RENDER->line(position.x - size, position.y - size, position.x - 1, position.y - 1, clr.new_alpha(255.f * hit.alpha), 1.f);
+					RENDER->line(position.x + size, position.y + size, position.x + 1, position.y + 1, clr.new_alpha(255.f * hit.alpha), 1.f);
+					RENDER->line(position.x - size, position.y + size, position.x - 1, position.y + 1, clr.new_alpha(255.f * hit.alpha), 1.f);
+					RENDER->line(position.x + size, position.y - size, position.x + 1, position.y - 1, clr.new_alpha(255.f * hit.alpha), 1.f);
 				}
 
 				if (g_cfg.misc.damage)
 				{
 					auto clr = g_cfg.misc.damage_clr.base();
-					RENDER->text(position.x, position.y - 30.f,
-						clr.new_alpha(255.f * hit.alpha), 
+					float offset = 30.f * (1.f - diff);
+					RENDER->text(position.x, position.y - offset,
+						clr.new_alpha(255.f * hit.alpha),
 						FONT_CENTERED_X | FONT_DROPSHADOW | FONT_LIGHT_BACK,
-						&RENDER->fonts.dmg, 
+						&RENDER->fonts.dmg,
 						tfm::format(CXOR("%d"), hit.dmg));
 				}
 			}
@@ -392,12 +392,12 @@ void c_bullet_tracers::render_hitmarkers()
 	if (screen_alpha && (g_cfg.misc.hitmarker & 2))
 	{
 		auto clr = g_cfg.misc.hitmarker_clr.base();
-
 		auto position = vec2_t{ RENDER->screen.x / 2.f, RENDER->screen.y / 2.f };
+		float size = 6.f;
 
-		RENDER->line(position.x - 3, position.y - 3, position.x - 9, position.y - 9, clr.new_alpha(255.f * screen_alpha), 1.f);
-		RENDER->line(position.x + 3, position.y + 3, position.x + 9, position.y + 9, clr.new_alpha(255.f * screen_alpha), 1.f);
-		RENDER->line(position.x - 3, position.y + 3, position.x - 9, position.y + 9, clr.new_alpha(255.f * screen_alpha), 1.f);
-		RENDER->line(position.x + 3, position.y - 3, position.x + 9, position.y - 9, clr.new_alpha(255.f * screen_alpha), 1.f);
+		RENDER->line(position.x - size, position.y - size, position.x - 1, position.y - 1, clr.new_alpha(255.f * screen_alpha), 1.f);
+		RENDER->line(position.x + size, position.y + size, position.x + 1, position.y + 1, clr.new_alpha(255.f * screen_alpha), 1.f);
+		RENDER->line(position.x - size, position.y + size, position.x - 1, position.y + 1, clr.new_alpha(255.f * screen_alpha), 1.f);
+		RENDER->line(position.x + size, position.y - size, position.x + 1, position.y - 1, clr.new_alpha(255.f * screen_alpha), 1.f);
 	}
 }

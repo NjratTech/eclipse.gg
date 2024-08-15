@@ -715,7 +715,7 @@ bool start_fakelag_fix(c_cs_player* player, anims_t* anims)
 	auto delta_time = correct - (TICKS_TO_TIME(HACKS->tickbase) - record->sim_time);
 	auto predicted_tick = ((int)HACKS->client_state->clock_drift_mgr.server_tick + TIME_TO_TICKS(latency) - record->server_tick_estimation) / record->choke;
 
-	if (predicted_tick > 0 && predicted_tick < 20)
+	if (predicted_tick > 0 && predicted_tick < 20 || EXPLOITS->cl_move.shifting)
 	{
 		auto max_backtrack_time = std::ceil(((delta_time - 0.2f) / HACKS->global_vars->interval_per_tick + 0.5f) / (float)record->choke);
 		auto prediction_ticks = std::min(predicted_tick, TIME_TO_TICKS(max_backtrack_time));
@@ -835,20 +835,16 @@ void get_result(bool& out, const vec3_t& start, const vec3_t& end, rage_player_t
 	out = can_hit_hitbox(start, end, rage, hitbox, matrix, record);
 }
 
-// TODO: rework
 bool hitchance(vec3_t eye_pos, rage_player_t& rage, const rage_point_t& point, anim_record_t* record, const float& chance, matrix3x4_t* matrix, float* hitchance_out = nullptr)
 {
 	static auto weapon_accuracy_nospread = HACKS->convars.weapon_accuracy_nospread;
 	if (weapon_accuracy_nospread && weapon_accuracy_nospread->get_bool())
 		return true;
 
-	auto current = 0;
 	auto networked_vars = ENGINE_PREDICTION->get_networked_vars(HACKS->cmd->command_number);
 
 	auto matrix_to_aim = record->extrapolated ? record->predicted_matrix : record->matrix_orig.matrix;
-
 	auto current_bones = matrix ? matrix : matrix_to_aim;
-	auto anim = ANIMFIX->get_local_anims();
 
 	if ((HACKS->ideal_inaccuracy + 0.0005f) >= networked_vars->inaccuracy) {
 		*hitchance_out = 1.f;
@@ -864,34 +860,32 @@ bool hitchance(vec3_t eye_pos, rage_player_t& rage, const rage_point_t& point, a
 	vec3_t forward, right, up;
 	math::angle_vectors(aim_angle, &forward, &right, &up);
 
-	vec3_t total_spread, spread_angle, end;
-	float inaccuracy, spread_x, spread_y;
-	std::tuple<float, float, float>* seed{};
+	int hits = 0;
+	const int total_seeds = MAX_SEEDS;
 
-	for (auto i = 0; i < MAX_SEEDS; i++)
+	for (int i = 0; i < total_seeds; i++)
 	{
-		seed = &precomputed_seeds[i];
+		auto& seed = precomputed_seeds[i];
 
-		inaccuracy = std::get<0>(*seed) * networked_vars->inaccuracy;
-		spread_x = std::get<2>(*seed) * inaccuracy;
-		spread_y = std::get<1>(*seed) * inaccuracy;
-		total_spread = (forward + right * spread_x + up * spread_y).normalized();
+		float inaccuracy = std::get<0>(seed) * networked_vars->inaccuracy;
+		float spread_x = std::get<2>(seed) * inaccuracy;
+		float spread_y = std::get<1>(seed) * inaccuracy;
+		vec3_t spread = (forward + right * spread_x + up * spread_y).normalized();
 
-		math::vector_angles(total_spread, spread_angle);
-
-		math::angle_vectors(spread_angle, end);
-		end = start + end.normalized() * HACKS->weapon_info->range;
+		vec3_t end = start + spread * HACKS->weapon_info->range;
 
 		if (can_hit_hitbox(start, end, &rage, point.hitbox, current_bones, record))
-			current++;
-
-		if (hitchance_out)
-			*hitchance_out = (float)current / (float)MAX_SEEDS;
+			hits++;
 	}
+
+	float hit_chance = (float)hits / (float)total_seeds;
+
+	if (hitchance_out)
+		*hitchance_out = hit_chance;
 
 	rage.restore.restore(rage.player);
 
-	return ((float)current / (float)MAX_SEEDS) >= chance;
+	return hit_chance >= chance;
 }
 
 void collect_damage_from_multipoints(int damage, vec3_t& predicted_eye_pos, rage_player_t* rage, rage_point_t& points, anim_record_t* record, matrix3x4_t* matrix_to_aim, bool predicted)
@@ -1066,9 +1060,8 @@ void c_ragebot::choose_best_point()
 			auto get_best_aim_point = [&]() -> rage_point_t
 				{
 					rage_point_t best{};
-					std::sort(rage->points_to_scan.begin(), rage->points_to_scan.end(), [](const rage_point_t& a, const rage_point_t& b) {
-						return a.damage > b.damage;
-						});
+					std::sort(rage->points_to_scan.begin(), rage->points_to_scan.end(),
+						[](const rage_point_t& a, const rage_point_t& b) { return a.damage > b.damage; });
 
 					for (auto& point : rage->points_to_scan)
 					{
@@ -1093,7 +1086,7 @@ void c_ragebot::choose_best_point()
 							}
 						}
 
-						if (is_body && (point.damage >= player->health() || prefer_baim_on_dt || rage_config.prefer_body))
+						if (is_body && (point.damage >= player->health() / 2 || prefer_baim_on_dt || rage_config.prefer_body))
 						{
 							point.found = true;
 							return point;
@@ -1108,9 +1101,9 @@ void c_ragebot::choose_best_point()
 
 					if (!priority_points.empty())
 					{
-						std::sort(priority_points.begin(), priority_points.end(), [](const rage_point_t& a, const rage_point_t& b) {
-							return a.damage > b.damage;
-							});
+						std::sort(priority_points.begin(), priority_points.end(),
+							[](const rage_point_t& a, const rage_point_t& b) { return a.damage > b.damage; });
+
 						priority_points[0].found = true;
 						return priority_points[0];
 					}
@@ -1127,7 +1120,6 @@ void c_ragebot::choose_best_point()
 			}
 		});
 }
-
 
 void c_ragebot::auto_revolver()
 {

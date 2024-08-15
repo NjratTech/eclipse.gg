@@ -366,12 +366,12 @@ bool c_render::init()
 		cfg.RasterizerFlags = ImGuiFreeType::RasterizerFlags::MonoHinting | ImGuiFreeType::RasterizerFlags::Monochrome;
 		fonts.pixel.init(io, smallest_pixel_7, sizeof(smallest_pixel_7), 10.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
 		fonts.eventlog.init(io, CXOR("C:\\Windows\\Fonts\\lucon.ttf"), 10.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
-		fonts.main.init(io, CXOR("C:\\Windows\\Fonts\\verdana.ttf"), 13.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
-		fonts.dmg.init(io, CXOR("C:\\Windows\\Fonts\\verdana.ttf"), 18.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
+		fonts.main.init(io, CXOR("C:\\Windows\\Fonts\\tahoma.ttf"), 13.f, &cfg, io.Fonts->GetGlyphRangesCyrillic()); // primordial font
+		fonts.dmg.init(io, CXOR("C:\\Windows\\Fonts\\tahoma.ttf"), 18.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
+		fonts.esp.init(io, CXOR("C:\\Windows\\Fonts\\tahoma.ttf"), 12.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
 	}
 
 	fonts.large.init(io, SFUIDisplay_SemiBold, sizeof(SFUIDisplay_SemiBold), 30.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
-	fonts.esp.init(io, CXOR("C:\\Windows\\Fonts\\verdana.ttf"), 12.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
 	fonts.misc.init(io, SFUIDisplay_SemiBold, sizeof(SFUIDisplay_SemiBold), 14.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
 	fonts.bold.init(io, SFUIDisplay_Bold, sizeof(SFUIDisplay_Bold), 10.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());
 	fonts.bold2.init(io, SFUIDisplay_Bold, sizeof(SFUIDisplay_Bold), 14.f, &cfg, io.Fonts->GetGlyphRangesCyrillic());

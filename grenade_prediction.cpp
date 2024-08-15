@@ -349,7 +349,6 @@ void c_grenade_prediction::render_offscreen_esp(nade_path_t* info, const float& 
 		FONT_CENTERED_X | FONT_CENTERED_Y | FONT_OUTLINE | FONT_LIGHT_BACK, &RENDER->fonts.weapon_icons_large, info->preview_icon);
 }
 
-// TODO: redesign
 void c_grenade_prediction::draw_world_path()
 {
 	if (!HACKS->in_game)
@@ -382,9 +381,6 @@ void c_grenade_prediction::draw_world_path()
 		auto& mod = nade_alpha[l.first];
 
 		float grenade_duration = 0.f;
-
-		// we don't know when decoy or smoke will arrive
-		// TO-DO: calculate it manually
 		if (data.nade_detonate_time)
 			grenade_duration = std::clamp(std::abs(data.nade_expire_time - HACKS->global_vars->curtime) / data.nade_detonate_time, 0.f, 1.f);
 
@@ -415,14 +411,13 @@ void c_grenade_prediction::draw_world_path()
 			render_offscreen_esp(&l.second, oof_nade_alpha[l.first], grenade_duration);
 			continue;
 		}
-	
+
 		auto& first_pos = data.path.front();
 		auto clr = base_clr.new_alpha(base_clr.a() * mod * weapon_alpha * 0.7f);
 
 		RESTORE(draw_list->Flags);
 		draw_list->Flags |= ImDrawListFlags_AntiAliasedFill | ImDrawListFlags_AntiAliasedLines;
 
-		// grenade path
 		if (is_local_owner && data.path.size() > 1 && g_cfg.visuals.grenade_warning_line)
 		{
 			vec2_t nade_start, nade_end;
@@ -439,17 +434,37 @@ void c_grenade_prediction::draw_world_path()
 
 		if (data.path.size() > 1 && data.last_path_pos.x != 0.f && data.last_path_pos.y != 0.f)
 		{
-			constexpr auto thickness = 2.5f;
 			constexpr auto radius = 20.f;
-			constexpr auto radius_second = radius - thickness;
 
-			RENDER->circle_filled(data.last_path_pos.x, data.last_path_pos.y, radius, { 0, 0, 0, (int)(150 * mod) }, 32);
-
-			RENDER->circle(data.last_path_pos.x, data.last_path_pos.y, radius_second, clr, 32, thickness);
+			RENDER->circle_filled(data.last_path_pos.x, data.last_path_pos.y, radius, { 255, 255, 255, (int)(100 * mod) }, 32);
 
 			RENDER->text(data.last_path_pos.x, data.last_path_pos.y,
 				c_color{ 255, 255, 255, (int)(255 * mod) }, FONT_CENTERED_X | FONT_CENTERED_Y | FONT_DROPSHADOW | FONT_LIGHT_BACK,
 				&RENDER->fonts.weapon_icons_large, data.preview_icon.c_str());
+
+			vec3_t player_pos;
+			if (HACKS->local->is_alive())
+			{
+				player_pos = HACKS->local->get_abs_origin();
+			}
+			else
+			{
+				auto observer_target = (c_cs_player*)(HACKS->entity_list->get_client_entity_handle(HACKS->local->observer_target()));
+				if (observer_target && observer_target->is_player())
+				{
+					player_pos = observer_target->get_abs_origin();
+				}
+			}
+
+			vec3_t grenade_pos = data.nade_origin;
+			float distance = player_pos.dist_to(grenade_pos) * 0.01905f;
+
+			char distance_str[16];
+			snprintf(distance_str, sizeof(distance_str), "%.1f m", distance);
+
+			RENDER->text(data.last_path_pos.x, data.last_path_pos.y + radius + 5,
+				c_color{ 255, 255, 255, (int)(255 * mod) }, FONT_CENTERED_X | FONT_DROPSHADOW,
+				&RENDER->fonts.esp, distance_str);
 		}
 	}
 }

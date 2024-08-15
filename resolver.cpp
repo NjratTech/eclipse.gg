@@ -3,35 +3,77 @@
 #include "animations.hpp"
 #include "server_bones.hpp"
 #include "ragebot.hpp"
-
-// TODO: improve jitter fix && add freestand resolve
+#include <numeric>
 
 namespace resolver
 {
 	inline void prepare_jitter(c_cs_player* player, resolver_info_t& resolver_info, anim_record_t* current)
 	{
 		auto& jitter = resolver_info.jitter;
+		auto diff = math::angle_diff(player->eye_angles().y, current->eye_angles.y);
 
-		auto diff{ math::angle_diff(player->eye_angles().y, current->eye_angles.y) };
+		jitter.angles.push_back(diff);
+		if (jitter.angles.size() > 5)
+			jitter.angles.pop_front();
 
-		if (diff == 0) {
-			if (jitter.static_ticks < 3)
-				jitter.static_ticks++;
-			else
-				jitter.jitter_ticks = 0;
+		jitter.is_jitter = false;
+		if (jitter.angles.size() >= 3)
+		{
+			float avg = std::accumulate(jitter.angles.begin(), jitter.angles.end(), 0.0f) / jitter.angles.size();
+			float variance = 0.0f;
+			for (const auto& angle : jitter.angles)
+				variance += std::pow(angle - avg, 2);
+			variance /= jitter.angles.size();
+
+			jitter.is_jitter = variance > 15.0f;
 		}
-		else {
-			if (jitter.jitter_ticks < 3)
-				jitter.jitter_ticks++;
-			else
-				jitter.static_ticks = 0;
-		}
 
-		jitter.is_jitter = jitter.jitter_ticks > jitter.static_ticks;
-
-		if (jitter.is_jitter) {
+		if (jitter.is_jitter)
 			jitter.jitter_side = diff > 0 ? 1 : -1;
+	}
+
+	inline void freestand_resolve(c_cs_player* player, resolver_info_t& resolver_info)
+	{
+		constexpr float RANGE = 32.f;
+
+		vec3_t src = player->get_eye_position();
+		vec3_t forward, right, up;
+		math::angle_vectors(player->eye_angles(), &forward, &right, &up);
+
+		vec3_t left_end = src + (right * -RANGE);
+		vec3_t right_end = src + (right * RANGE);
+
+		float left_fraction = 0.f, right_fraction = 0.f;
+		 
+		for (float i = 0.f; i < 1.f; i += 0.1f)
+		{
+			vec3_t left_point = src + (left_end - src) * i;
+			vec3_t right_point = src + (right_end - src) * i;
+
+			c_game_trace left_trace, right_trace;
+			ray_t left_ray, right_ray;
+
+			left_ray.init(left_point, left_point + forward * 100.f);
+			right_ray.init(right_point, right_point + forward * 100.f);
+
+			HACKS->engine_trace->trace_ray(left_ray, MASK_SHOT_HULL | CONTENTS_HITBOX, nullptr, &left_trace);
+			HACKS->engine_trace->trace_ray(right_ray, MASK_SHOT_HULL | CONTENTS_HITBOX, nullptr, &right_trace);
+
+			left_fraction += left_trace.fraction;
+			right_fraction += right_trace.fraction;
 		}
+
+		if (left_fraction > right_fraction)
+			resolver_info.side = 1;
+		else if (right_fraction > left_fraction)
+			resolver_info.side = -1;
+		else
+			resolver_info.side = 0;
+
+		resolver_info.mode = XOR("freestand");
+		resolver_info.resolved = true;
+		resolver_info.freestanding.updated = true;
+		resolver_info.freestanding.update_time = HACKS->global_vars->curtime;
 	}
 
 	inline void prepare_side(c_cs_player* player, anim_record_t* current, anim_record_t* last)
@@ -83,7 +125,7 @@ namespace resolver
 			auto& misses = RAGEBOT->missed_shots[player->index()];
 			if (misses > 0)
 			{
-				switch (misses % 3)
+				switch (misses % 4)
 				{
 				case 1:
 					info.side = -1;
@@ -91,20 +133,21 @@ namespace resolver
 				case 2:
 					info.side = 1;
 					break;
+				case 3:
+					freestand_resolve(player, info);
+					break;
 				case 0:
 					info.side = 0;
 					break;
 				}
 
 				info.resolved = true;
-				info.mode = XOR("brute");
+				if (info.mode != XOR("freestand"))
+					info.mode = XOR("brute");
 			}
 			else
 			{
-				info.side = 0;
-				info.mode = XOR("static");
-
-				info.resolved = true;
+				freestand_resolve(player, info);
 			}
 		}
 	}
@@ -119,7 +162,7 @@ namespace resolver
 		if (!state)
 			return;
 
-		float desync_angle = choke < 2 ? state->get_max_rotation() : 120.f;
+		float desync_angle = state->get_max_rotation();
 		state->abs_yaw = math::normalize_yaw(player->eye_angles().y + desync_angle * info.side);
 	}
 }

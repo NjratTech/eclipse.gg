@@ -95,15 +95,25 @@ float c_animation_state::get_min_rotation()
 
 float c_animation_state::get_max_rotation()
 {
-    float speed_walk = std::max(0.f, std::min(this->speed_as_portion_of_walk_top_speed, 1.f));
-    float speed_duck = std::max(0.f, std::min(this->speed_as_portion_of_crouch_top_speed, 1.f));
+    float speed = fminf(this->velocity.length(), 260.0f);
+    float max_movement_speed = 260.0f;
 
-    float modifier = ((this->walk_run_transition * -0.30000001f) - 0.19999999f) * speed_walk + 1.f;
+    auto weapon = static_cast<c_base_combat_weapon*>(this->weapon);
 
-    if (this->anim_duck_amount > 0.0f)
-        modifier += ((this->anim_duck_amount * speed_duck) * (0.5f - modifier));
+    if (weapon)
+        max_movement_speed = fminf(static_cast<c_cs_player*>(this->player)->max_speed(), 260.0f);
 
-    return this->aim_yaw_max * modifier;
+    float movement_factor = fminf(1.0f, speed / (max_movement_speed * 0.52f));
+
+    float yaw_modifier = (((this->walk_run_transition * -0.3f) - 0.2f) * movement_factor)
+        + 1.0f;
+
+    if (this->anim_duck_amount > 0.0f) {
+        float duck_speed = fminf(1.0f, speed / (max_movement_speed * 0.34f));
+        yaw_modifier += (this->anim_duck_amount * duck_speed) * (0.5f - yaw_modifier);
+    }
+
+    return yaw_modifier * this->aim_yaw_max;
 }
 
 void c_animation_state::increment_layer_cycle(c_animation_layers* layer, bool loop) {

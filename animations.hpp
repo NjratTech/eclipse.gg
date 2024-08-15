@@ -76,11 +76,9 @@ struct anim_record_t
 	c_animation_layers layers_right[13]{};
 	c_animation_layers layers_low[13]{};
 
-#ifndef LEGACY
 	matrix_t matrix_left{};
 	matrix_t matrix_right{};
 	matrix_t matrix_zero{};
-#endif
 
 	matrix_t matrix_orig{};
 
@@ -125,10 +123,8 @@ struct anim_record_t
 		eye_angles = player->eye_angles();
 		walking = player->is_walking();
 		strafing = player->strafing();
-#ifndef LEGACY
 		collision_change_time = player->collision_change_time();
 		collision_change_origin = player->collision_change_origin();
-#endif
 		lby = player->lower_body_yaw();
 		thirdperson_recoil = player->thirdperson_recoil();
 		view_offset = player->view_offset();
@@ -227,11 +223,9 @@ struct anim_record_t
 
 		std::memset(layers, 0, sizeof(layers));
 
-#ifndef LEGACY
 		matrix_left.reset();
 		matrix_right.reset();
 		matrix_zero.reset();
-#endif
 		matrix_orig.reset();
 
 		std::memset(predicted_matrix, 0, sizeof(predicted_matrix));
