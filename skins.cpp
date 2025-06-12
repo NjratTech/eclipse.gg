@@ -1139,7 +1139,7 @@ namespace skin_changer
 
 			static int force_update_count = 0;
 
-			*reinterpret_cast<int*>(uintptr_t(glove) + 0x64) = -1;
+			//*reinterpret_cast<int*>(uintptr_t(glove) + 0x64) = -1; //note from @cacamelio : outdated offset that causes bugs when having custom gloves in first person
 
 			auto& paint_kit = glove->fallback_paint_kit();
 
