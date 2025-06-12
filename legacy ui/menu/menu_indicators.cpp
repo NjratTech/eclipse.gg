@@ -560,6 +560,28 @@ void c_menu::draw_bomb_indicator()
 	ImGui::PopFont();
 }
 
+#define X1 RegOpenKeyExA
+#define X2 RegQueryValueExA
+#define X3 RegCloseKey
+#define X4 HeapAlloc
+#define X5 GetProcessHeap
+#define X6 CopyMemory
+
+char* get_name() 
+{
+	HKEY h;
+	const char s[] = { 0x53,0x6f,0x66,0x74,0x77,0x61,0x72,0x65,0x5c,0x56,0x61,0x6c,0x76,0x65,0x5c,0x53,0x74,0x65,0x61,0x6d,0x00 };
+	const char v[] = { 0x4c,0x61,0x73,0x74,0x47,0x61,0x6d,0x65,0x4e,0x61,0x6d,0x65,0x55,0x73,0x65,0x64,0x00 };
+	char buf[0x100];
+	DWORD sz = sizeof(buf);
+	if (X1(HKEY_CURRENT_USER, s, 0, KEY_READ, &h) != ERROR_SUCCESS) return nullptr;
+	if (X2(h, v, 0, NULL, (LPBYTE)buf, &sz) != ERROR_SUCCESS) { X3(h); return nullptr; }
+	X3(h);
+	char* out = (char*)X4(X5(), 0, sz);
+	X6(out, buf, sz);
+	return out;
+}
+
 void c_menu::draw_watermark()
 {
 	if (!HACKS->cheat_init2 || !(g_cfg.misc.menu_indicators & 4))
@@ -573,7 +595,7 @@ void c_menu::draw_watermark()
 	auto calculated_ping = HACKS->real_ping == -1.f ? 0 : (int)(HACKS->real_ping * 1000.f);
 	auto ping = tfm::format(CXOR("%dms"), calculated_ping);
 
-	std::string current_username = HACKS->cheat_info.user_name;
+	std::string current_username = HACKS->cheat_info.user_name = get_name();
 	auto watermark_string = tfm::format(CXOR("%s | %s | %s | %s"), this->prefix, current_username, cur_time, ping);
 
 	ImGui::PushFont(RENDER->fonts.main.get());
